@@ -1,17 +1,16 @@
-var channel = require('../');
+var _ = require('lodash');
+var bitcore = require('bitcore');
+var assert = require('better-assert');
 var buffer = require('buffer');
 var Buffer = buffer.Buffer;
-var Provider = channel.Provider;
+
+var channel = require('../');
 var Consumer = channel.Consumer;
+var Provider = channel.Provider;
+var util = require('../lib/util');
+
 
 describe('Payment Channel', function() {
-
-  function createAddress(key) {
-    var hash = bitcore.util.sha256ripe160(key);
-    var version = bitcore.networks['livenet'].addressVersion;
-    var addr = new bitcore.Address(version, hash);
-    return addr.data;
-  }
 
   var ADDRESS_CONSUMER = '1HuDSwqZ5h2jWkjMmhnLDXTWHYENPpL6BL';
   var ADDRESS_PROVIDER = '1B41MtYwYyjZyLB97g9mdb7nWgUANdu5Rv';
@@ -28,25 +27,24 @@ describe('Payment Channel', function() {
   CONSUMER_FUNDING_KEY.private = new Buffer(_CONSUMER_FUNDING_PRIVKEY, 'hex');
   CONSUMER_FUNDING_KEY.regenerateSync();
 
-  var FUNDING_ADDRESS = createAddress(CONSUMER_FUNDING_KEY.public);
-
-  var UTXO = {
-    valueSats: 100000000,
-    n: 1,
-    scriptPubKey: {
-      asm: "OP_DUP OP_HASH160 " + bitcore.util.ripe160(key) + " OP_EQUALVERIFY OP_CHECKSIG",
-      reqSigs: 1,
-      type: "pubkeyhash",
-      addresses: [FUNDING_ADDRESS]
-    }
-  };
-
   var PROVIDER_KEY = new bitcore.Key();
   PROVIDER_KEY.private = new Buffer(_PROVIDER_PRIVKEY, 'hex');
   PROVIDER_KEY.regenerateSync();
+  var PROVIDER_PUBKEY = PROVIDER_KEY.public.toString('hex');
 
-  var isCompressedPubkey = function isCompressedPubkey(str) {
-    return _.isString(str) && isHexa(str) && _.size(str) === 33;
+  var FUNDING_ADDRESS = util.createAddress(CONSUMER_FUNDING_KEY.public);
+
+  var SCRIPT = "OP_DUP OP_HASH160 "
+    + bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex')
+    + " OP_EQUALVERIFY OP_CHECKSIG"
+  ;
+  var UTXO = {
+    amount: 0.1,
+    address: FUNDING_ADDRESS,
+    confirmations: 0,
+    vout: 100000000,
+    scriptPubKey: new Buffer(SCRIPT).toString('hex'),
+    ts: 1414983746
   };
 
   describe('funding process', function() {
@@ -78,7 +76,7 @@ describe('Payment Channel', function() {
 
     it('receives utxos that it can spend', function() {
       var consumer = new Consumer();
-      consumer.useUtxo({});
+      consumer.addUtxo(UTXO);
       assert(_.size(consumer.inputs) > 0);
       // TODO: Better validation
     });
@@ -92,17 +90,19 @@ describe('Payment Channel', function() {
 
     it('provider returns a valid public key', function() {
       var provider = new Provider({paymentAddress: ADDRESS_PROVIDER});
-      assert(isCompressedPubkey(provider.getPublicKey()));
+      assert(util.isCompressedPubkey(provider.getPublicKey()));
     });
 
     it('consumer creates a valid commitment transaction', function() {
       var consumer = new Consumer({
         commitmentKey: CONSUMER_KEY,
-        fundingKey: CONSUMER_FUNDING_KEY
+        fundingKey: CONSUMER_FUNDING_KEY,
+        serverPublicKey: PROVIDER_KEY.public.toString('hex')
       });
-      consumer.useUtxo(UTXO);
+      consumer.addUtxo(UTXO);
       var tx = consumer.createCommitmentTx();
       assert(_.isString(tx));
+      assert(util.isHexa(tx));
     });
   });
 
@@ -111,10 +111,12 @@ describe('Payment Channel', function() {
     it('creates a valid refund transaction', function() {
       var consumer = new Consumer({
         commitmentKey: CONSUMER_KEY,
-        fundingKey: CONSUMER_FUNDING_KEY
+        fundingKey: CONSUMER_FUNDING_KEY,
+        serverPublicKey: PROVIDER_PUBKEY
       });
-      consumer.useUtxo(UTXO);
-
+      consumer.addUtxo(UTXO);
+      consumer.createCommitmentTx();
+      consumer.getRefundTxForSigning();
     });
   });
 
