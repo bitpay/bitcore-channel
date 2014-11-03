@@ -5,6 +5,9 @@
   "scripts": {
     "test": "grunt test"
   },
+  "browser": {
+    "better-assert": "assert"
+  },
   "author": "Esteban Ordano <eordano@gmail.com>",
   "license": "MIT",
   "repository": "https://github.com/eordano/bitcore-stream",
