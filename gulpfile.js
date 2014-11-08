@@ -3,7 +3,8 @@ var _ = require('lodash');
 var gulp = require('gulp');
 var gulp_mocha = require('gulp-mocha');
 var gulp_jshint = require('gulp-jshint');
-var gulp_jsdoc = require("gulp-jsdoc");
+var gulp_jsdoc = require('gulp-jsdoc');
+var gulp_closureCompiler = require('gulp-closure-compiler');
 
 
 var files = ['lib/**/*.js'];
@@ -44,6 +45,12 @@ gulp.task('lint', function() {
   return gulp.src(alljs)
     .pipe(gulp_jshint())
     .pipe(gulp_jshint.reporter('default'));
+});
+
+gulp.task('compile', function() {
+  return gulp.src(files)
+    .pipe(gulp_closureCompiler({fileName: 'build.js'}))
+    .pipe(gulp.dest('dist'));
 });
 
 gulp.task('default', ['lint', 'jsdoc', 'test']);

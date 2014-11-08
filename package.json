@@ -19,6 +19,7 @@
     "gulp-jsdoc": "^0.1.4",
     "gulp-jshint": "^1.9.0",
     "gulp-mocha": "^1.0.0",
+    "gulp-closure-compiler": "git://github.com/eordano/gulp-closure-compiler.git#326e5ee8",
     "mocha": "^2.0.1"
   }
 }
