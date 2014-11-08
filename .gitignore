@@ -16,6 +16,9 @@ coverage
 # Docfiles generated
 docs
 
+# Distribution files generated
+dist
+
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 

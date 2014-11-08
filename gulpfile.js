@@ -49,7 +49,12 @@ gulp.task('lint', function() {
 
 gulp.task('compile', function() {
   return gulp.src(files)
-    .pipe(gulp_closureCompiler({fileName: 'build.js'}))
+    .pipe(gulp_closureCompiler({
+      fileName: 'build.js',
+      compilerFlags: {
+        language_in: 'ECMASCRIPT5_STRICT'
+      }
+    }))
     .pipe(gulp.dest('dist'));
 });
 
