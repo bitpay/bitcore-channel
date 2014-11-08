@@ -28,7 +28,7 @@ gulp.task('test-nofail', function() {
 gulp.task('watch:test', function() {
   // TODO: Only run tests that are linked to file changes by doing
   // something smart like reading through the require statements
-  return gulp.watch(alljs, ['test-nofail']);
+  return gulp.watch(alljs, ['lint', 'test-nofail']);
 });
 
 gulp.task('jsdoc', function() {
