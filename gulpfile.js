@@ -65,7 +65,8 @@ gulp.task('compile', function() {
       compilerFlags: {
         language_in: 'ECMASCRIPT5_STRICT',
         warning_level: 'VERBOSE',
-        externs: nodeJsExterns.getExternsAsListOfResolvedPaths(),
+        externs: ['externs/underscore-1.5.1.js', 'externs/bitcore-0.1.39.js']
+          .concat(nodeJsExterns.getExternsAsListOfResolvedPaths()),
         jscomp_off: ['nonStandardJsDocs']
         // TODO: Nice to have, externs for _ and bitcore (and others...)
       }
