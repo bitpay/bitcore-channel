@@ -12,7 +12,8 @@
     "better-assert": "^1.0.1",
     "bitcore": "^0.1.38",
     "inherits": "^2.0.1",
-    "lodash": "^2.4.1"
+    "lodash": "^2.4.1",
+    "nodejs-externs": "^0.10.0"
   },
   "browser": {
     "better-assert": "assert"

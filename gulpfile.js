@@ -8,6 +8,8 @@ var gulp_jshint = require('gulp-jshint');
 var gulp_mocha = require('gulp-mocha');
 var gulp_shell = require('gulp-shell');
 
+var nodeJsExterns = require('nodejs-externs');
+
 
 var files = ['lib/**/*.js'];
 var tests = ['test/**/*.spec.js'];
@@ -23,7 +25,7 @@ function testAllFiles() {
 }
 
 gulp.task('setup', gulp_shell.task([
-  'sh shell/download_closure.sh'
+  'bower install'
 ]));
 
 gulp.task('test', testAllFiles);
@@ -59,15 +61,16 @@ gulp.task('compile', function() {
     .pipe(gulp_insert.prepend('(function() {'))
     .pipe(gulp_closureCompiler({
       fileName: 'build.js',
-      compilerPath: 'vendor/compiler.jar',
+      compilerPath: 'bower_components/closure-compiler/compiler.jar',
       compilerFlags: {
         language_in: 'ECMASCRIPT5_STRICT',
         warning_level: 'VERBOSE',
-        output_wrapper: '(function(){%output%})();'
-        // TODO: nice to have "warning_level: 'VERBOSE'"
+        externs: nodeJsExterns.getExternsAsListOfResolvedPaths(),
+        jscomp_off: ['nonStandardJsDocs']
+        // TODO: Nice to have, externs for _ and bitcore (and others...)
       }
     }))
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['lint', 'jsdoc', 'compile', 'test']);
+gulp.task('default', ['setup', 'lint', 'jsdoc', 'compile', 'test']);
