@@ -9,24 +9,21 @@
   "license": "MIT",
   "repository": "https://github.com/eordano/bitcore-channel",
   "dependencies": {
-    "better-assert": "^1.0.1",
     "bitcore": "^0.1.38",
     "inherits": "^2.0.1",
     "lodash": "^2.4.1",
-    "nodejs-externs": "^0.10.0"
-  },
-  "browser": {
-    "better-assert": "assert"
+    "preconditions": "^1.0.8"
   },
   "devDependencies": {
     "gulp": "^3.8.10",
-    "gulp-closure-compiler": "git://github.com/eordano/gulp-closure-compiler.git#326e5ee8",
+    "gulp-closure-compiler": "^0.2.8",
     "gulp-insert": "^0.4.0",
     "gulp-jsdoc": "^0.1.4",
     "gulp-jshint": "^1.9.0",
     "gulp-mocha": "^1.0.0",
     "gulp-shell": "^0.2.10",
     "mocha": "^2.0.1",
+    "nodejs-externs": "^0.10.0",
     "run-sequence": "^1.0.1"
   }
 }

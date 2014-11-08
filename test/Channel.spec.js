@@ -1,6 +1,6 @@
 var _ = require('lodash');
 var bitcore = require('bitcore');
-var assert = require('better-assert');
+var assert = require('assert');
 var buffer = require('buffer');
 var Buffer = buffer.Buffer;
 
@@ -16,7 +16,7 @@ describe('Payment Channel', function() {
 
     it('provides you an address where you can fund the channel', function() {
       var consumer = new Consumer();
-      assert(new bitcore.Address(consumer.getFundingAddress()).isValid());
+      assert.ok(new bitcore.Address(consumer.getFundingAddress()).isValid());
     });
 
   });
@@ -25,14 +25,14 @@ describe('Payment Channel', function() {
 
     it('gives you a private key and address for refund/change', function() {
       var consumer = new Consumer({network: 'testnet'});
-      assert(_.isString(consumer.getRefundAddress()));
-      assert(new bitcore.Address(consumer.getRefundAddress()).isValid());
+      assert.ok(_.isString(consumer.getRefundAddress()));
+      assert.ok(new bitcore.Address(consumer.getRefundAddress()).isValid());
     });
 
     it('allows you to set up an address you\'d like your refund/change funds', function() {
       var address = ADDRESS_CONSUMER;
       var consumer = new Consumer({refundAddress: address, network: 'testnet'});
-      assert(address === consumer.getRefundAddress());
+      assert.ok(address === consumer.getRefundAddress());
     });
 
   });
@@ -42,7 +42,7 @@ describe('Payment Channel', function() {
     it('receives utxos that it can spend', function() {
       var consumer = new Consumer({network: 'testnet'});
       consumer.addUtxo(UTXO);
-      assert(_.size(consumer.inputs) > 0);
+      assert.ok(_.size(consumer.inputs) > 0);
       // TODO: Better validation
     });
 
@@ -55,7 +55,7 @@ describe('Payment Channel', function() {
 
     it('provider returns a valid public key', function() {
       var provider = new Provider({paymentAddress: ADDRESS_PROVIDER, network: 'testnet'});
-      assert(util.isCompressedPubkey(provider.getPublicKey()));
+      assert.ok(util.isCompressedPubkey(provider.getPublicKey()));
     });
 
     it('consumer creates a valid commitment transaction', function() {
@@ -67,8 +67,8 @@ describe('Payment Channel', function() {
       });
       consumer.addUtxo(UTXO);
       var tx = consumer.createCommitmentTx();
-      assert(_.isString(tx));
-      assert(util.isHexa(tx));
+      assert.ok(_.isString(tx));
+      assert.ok(util.isHexa(tx));
     });
   });
 
