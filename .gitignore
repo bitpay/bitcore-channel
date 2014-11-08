@@ -19,6 +19,9 @@ docs
 # Distribution files generated
 dist
 
+# For downloading closure-compiler
+vendor
+
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 

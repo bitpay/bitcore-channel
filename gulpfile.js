@@ -1,10 +1,12 @@
 var _ = require('lodash');
 
 var gulp = require('gulp');
-var gulp_mocha = require('gulp-mocha');
-var gulp_jshint = require('gulp-jshint');
-var gulp_jsdoc = require('gulp-jsdoc');
 var gulp_closureCompiler = require('gulp-closure-compiler');
+var gulp_insert = require('gulp-insert');
+var gulp_jsdoc = require('gulp-jsdoc');
+var gulp_jshint = require('gulp-jshint');
+var gulp_mocha = require('gulp-mocha');
+var gulp_shell = require('gulp-shell');
 
 
 var files = ['lib/**/*.js'];
@@ -19,6 +21,10 @@ function ignoreError(err) {
 function testAllFiles() {
   return gulp.src(tests).pipe(new gulp_mocha({reporter: 'spec'}));
 }
+
+gulp.task('setup', gulp_shell.task([
+  'sh shell/download_closure.sh'
+]));
 
 gulp.task('test', testAllFiles);
 
@@ -49,13 +55,19 @@ gulp.task('lint', function() {
 
 gulp.task('compile', function() {
   return gulp.src(files)
+    .pipe(gulp_insert.append('})();'))
+    .pipe(gulp_insert.prepend('(function() {'))
     .pipe(gulp_closureCompiler({
       fileName: 'build.js',
+      compilerPath: 'vendor/compiler.jar',
       compilerFlags: {
-        language_in: 'ECMASCRIPT5_STRICT'
+        language_in: 'ECMASCRIPT5_STRICT',
+        warning_level: 'VERBOSE',
+        output_wrapper: '(function(){%output%})();'
+        // TODO: nice to have "warning_level: 'VERBOSE'"
       }
     }))
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['lint', 'jsdoc', 'test']);
+gulp.task('default', ['lint', 'jsdoc', 'compile', 'test']);
