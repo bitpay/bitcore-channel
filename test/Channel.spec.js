@@ -34,10 +34,10 @@ describe('Payment Channel', function() {
 
   var FUNDING_ADDRESS = util.createAddress(CONSUMER_FUNDING_KEY.public, 'testnet');
 
-  var SCRIPT = "OP_DUP OP_HASH160 "
-    + bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex')
-    + " OP_EQUALVERIFY OP_CHECKSIG"
-  ;
+  var SCRIPT = ("OP_DUP OP_HASH160 " +
+                bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex') +
+                " OP_EQUALVERIFY OP_CHECKSIG"
+  );
   var UTXO = {
     amount: 0.1,
     address: FUNDING_ADDRESS,
