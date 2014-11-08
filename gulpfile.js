@@ -6,6 +6,7 @@ var gulp_insert = require('gulp-insert');
 var gulp_jsdoc = require('gulp-jsdoc');
 var gulp_jshint = require('gulp-jshint');
 var gulp_mocha = require('gulp-mocha');
+var gulp_runSequence = require('run-sequence');
 var gulp_shell = require('gulp-shell');
 
 var nodeJsExterns = require('nodejs-externs');
@@ -74,4 +75,6 @@ gulp.task('compile', function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['setup', 'lint', 'jsdoc', 'compile', 'test']);
+gulp.task('default', function(callback) {
+  return gulp_runSequence('setup', ['lint', 'jsdoc', 'compile', 'test'], callback);
+});
