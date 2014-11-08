@@ -12,42 +12,6 @@ var util = require('../lib/util');
 
 describe('Payment Channel', function() {
 
-  var ADDRESS_CONSUMER = '1HuDSwqZ5h2jWkjMmhnLDXTWHYENPpL6BL';
-  var ADDRESS_PROVIDER = '1B41MtYwYyjZyLB97g9mdb7nWgUANdu5Rv';
-
-  var _CONSUMER_PRIVKEY = '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b';
-  var _CONSUMER_FUNDING_PRIVKEY = '4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce';
-  var _PROVIDER_PRIVKEY = 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35';
-
-  var CONSUMER_KEY = new bitcore.Key();
-  CONSUMER_KEY.private = new Buffer(_CONSUMER_PRIVKEY, 'hex');
-  CONSUMER_KEY.regenerateSync();
-
-  var CONSUMER_FUNDING_KEY = new bitcore.Key();
-  CONSUMER_FUNDING_KEY.private = new Buffer(_CONSUMER_FUNDING_PRIVKEY, 'hex');
-  CONSUMER_FUNDING_KEY.regenerateSync();
-
-  var PROVIDER_KEY = new bitcore.Key();
-  PROVIDER_KEY.private = new Buffer(_PROVIDER_PRIVKEY, 'hex');
-  PROVIDER_KEY.regenerateSync();
-  var PROVIDER_PUBKEY = PROVIDER_KEY.public.toString('hex');
-
-  var FUNDING_ADDRESS = util.createAddress(CONSUMER_FUNDING_KEY.public, 'testnet');
-
-  var SCRIPT = ("OP_DUP OP_HASH160 " +
-                bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex') +
-                " OP_EQUALVERIFY OP_CHECKSIG"
-  );
-  var UTXO = {
-    amount: 0.1,
-    address: FUNDING_ADDRESS,
-    confirmations: 0,
-    vout: 0,
-    scriptPubKey: "76a914b033aa4aa16a6132466a68a2b275f628101572d488ac",
-    txid: "1a2416986b55d3fcb18c03174adf0a872485bbc38d5c38a3bc05adc90c4839d1",
-    ts: 1414984429
-  };
-
   describe('funding process', function() {
 
     it('provides you an address where you can fund the channel', function() {
@@ -160,3 +124,40 @@ describe('Payment Channel', function() {
   });
 
 });
+
+var ADDRESS_CONSUMER = '1HuDSwqZ5h2jWkjMmhnLDXTWHYENPpL6BL';
+var ADDRESS_PROVIDER = '1B41MtYwYyjZyLB97g9mdb7nWgUANdu5Rv';
+
+var _CONSUMER_PRIVKEY = '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b';
+var _CONSUMER_FUNDING_PRIVKEY = '4e07408562bedb8b60ce05c1decfe3ad' +
+                                '16b72230967de01f640b7e4729b49fce';
+var _PROVIDER_PRIVKEY = 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35';
+
+var CONSUMER_KEY = new bitcore.Key();
+CONSUMER_KEY.private = new Buffer(_CONSUMER_PRIVKEY, 'hex');
+CONSUMER_KEY.regenerateSync();
+
+var CONSUMER_FUNDING_KEY = new bitcore.Key();
+CONSUMER_FUNDING_KEY.private = new Buffer(_CONSUMER_FUNDING_PRIVKEY, 'hex');
+CONSUMER_FUNDING_KEY.regenerateSync();
+
+var PROVIDER_KEY = new bitcore.Key();
+PROVIDER_KEY.private = new Buffer(_PROVIDER_PRIVKEY, 'hex');
+PROVIDER_KEY.regenerateSync();
+var PROVIDER_PUBKEY = PROVIDER_KEY.public.toString('hex');
+
+var FUNDING_ADDRESS = util.createAddress(CONSUMER_FUNDING_KEY.public, 'testnet');
+
+var SCRIPT = 'OP_DUP OP_HASH160 ' +
+              bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex') +
+              ' OP_EQUALVERIFY OP_CHECKSIG';
+var UTXO = {
+  amount: 0.1,
+  address: FUNDING_ADDRESS,
+  confirmations: 0,
+  vout: 0,
+  scriptPubKey: '76a914b033aa4aa16a6132466a68a2b275f628101572d488ac',
+  txid: '1a2416986b55d3fcb18c03174adf0a872485bbc38d5c38a3bc05adc90c4839d1',
+  ts: 1414984429
+};
+
