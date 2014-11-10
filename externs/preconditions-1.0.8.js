@@ -17,12 +17,12 @@ preconditions.singleton = function() {};
 
 /**
  * @param {*} arg
- * @param {string} msg
+ * @param {string=} msg
  */
 preconditions.prototype.checkArgument = function(arg, msg) {};
 
 /**
  * @param {*} arg
- * @param {string} msg
+ * @param {string=} msg
  */
 preconditions.prototype.checkState = function(arg, msg) {};

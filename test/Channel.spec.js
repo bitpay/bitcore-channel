@@ -16,7 +16,7 @@ describe('Payment Channel', function() {
 
     it('provides you an address where you can fund the channel', function() {
       var consumer = new Consumer();
-      assert.ok(new bitcore.Address(consumer.getFundingAddress()).isValid());
+      assert.ok(consumer.getFundingAddress().isValid());
     });
 
   });
@@ -25,14 +25,13 @@ describe('Payment Channel', function() {
 
     it('gives you a private key and address for refund/change', function() {
       var consumer = new Consumer({network: 'testnet'});
-      assert.ok(_.isString(consumer.getRefundAddress()));
-      assert.ok(new bitcore.Address(consumer.getRefundAddress()).isValid());
+      assert.ok(consumer.getRefundAddress().isValid());
     });
 
     it('allows you to set up an address you\'d like your refund/change funds', function() {
       var address = ADDRESS_CONSUMER;
       var consumer = new Consumer({refundAddress: address, network: 'testnet'});
-      assert.ok(address === consumer.getRefundAddress());
+      assert.ok(address === consumer.getRefundAddress().toString());
     });
 
   });
@@ -149,8 +148,8 @@ var PROVIDER_PUBKEY = PROVIDER_KEY.public.toString('hex');
 var FUNDING_ADDRESS = util.createAddress(CONSUMER_FUNDING_KEY.public, 'testnet');
 
 var SCRIPT = 'OP_DUP OP_HASH160 ' +
-              bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex') +
-              ' OP_EQUALVERIFY OP_CHECKSIG';
+             bitcore.util.sha256ripe160(CONSUMER_FUNDING_KEY.public).toString('hex') +
+             ' OP_EQUALVERIFY OP_CHECKSIG';
 var UTXO = {
   amount: 0.1,
   address: FUNDING_ADDRESS,
