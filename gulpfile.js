@@ -73,7 +73,6 @@ gulp.task('compile', function() {
         ]
           .concat(nodeJsExterns.getExternsAsListOfResolvedPaths()),
         jscomp_off: ['nonStandardJsDocs']
-        // TODO: Nice to have, externs for _ and bitcore (and others...)
       }
     }))
     .pipe(gulp.dest('dist'));
