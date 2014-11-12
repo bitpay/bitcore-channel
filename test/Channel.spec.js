@@ -66,8 +66,7 @@ describe('Payment Channel', function() {
       });
       consumer.addUtxo(UTXO);
       var tx = consumer.createCommitmentTx();
-      assert.ok(_.isString(tx));
-      assert.ok(util.isHexa(tx));
+      assert.ok(tx instanceof bitcore.Transaction);
     });
   });
 
@@ -80,7 +79,7 @@ describe('Payment Channel', function() {
     });
     consumer.addUtxo(UTXO);
     consumer.createCommitmentTx();
-    consumer.getRefundTxForSigning();
+    consumer.getRefundTxHash();
     return consumer;
   }
 
@@ -98,7 +97,7 @@ describe('Payment Channel', function() {
         key: PROVIDER_KEY,
         network: 'testnet'
       });
-      var refundTx = consumer.getRefundTxForSigning();
+      var refundTx = consumer.getRefundTxHash();
       var signedTx = provider.signRefundTx(refundTx);
       // TODO: Validate signedTx, maybe against bitcoind
       console.log(consumer.createCommitmentTx());
