@@ -1,5 +1,5 @@
 var bitcore = require('bitcore');
-var Provider = require('./Provider');
+var Provider = require('../lib/Provider');
 
 var fundingKey = new bitcore.Key();
 fundingKey.private = new Buffer('79b0630419ad72397d211db4988c98ffcb5955b14f6ec5c5651eec5c98d7e557', 'hex');
@@ -18,21 +18,22 @@ var pro = new Provider({
         network: 'testnet'
 })
 
-var Consumer = require('./Consumer');
+var Consumer = require('../lib/Consumer');
 
 var con = new Consumer({network: 'testnet', serverPublicKey: proKey.public, refundAddress: 'mqB4k1cqzfojmoa7PzyMSksM17gUpSTe6n', commitmentKey: conKey, fundingKey: fundingKey});
 con.fundingAddress.toString();
 con.commitmentTx.getAddress().toString()
 
 
-var Refund = require('./transactions/Refund');
+var Refund = require('../lib/transactions/Refund');
 
 var opts = {
-  multisigOut: {"address":"2NGPp3oYGmpFokw4ZWux2jJU39i8zwfmTK5","txid":"440f60fb1a76d300a62ded3c7107965e9114608bd4589a954265097c6e71002a","vout":0,"ts":1416177149,"scriptPubKey":"a914fdeaa734587dfed0090c98fbf1bf8730009ddda887","amount":0.001,"confirmationsFromCache":false},
+  multisigOut: {"address":"2NGPp3oYGmpFokw4ZWux2jJU39i8zwfmTK5","txid":"17bb6b3f8f90a3aa7abd2ee4c3db7bc95a01bc9acd6cd919b2ac8eac367cfc7a","vout":1,"ts":1416181250,"scriptPubKey":"a914fdeaa734587dfed0090c98fbf1bf8730009ddda887","amount":0.009,"confirmationsFromCache":false},
   amount: 100000,
   refundAddress: new bitcore.Address('mrCHmWgn54hJNty2srFF4XLmkey5GnCv5m'),
   network: 'testnet',
-  lockTime: 1416277466
+  pubKeys: con.commitmentTx.pubkeys,
+  lockTime: 1
 }
 var e = new Refund(opts);
 
