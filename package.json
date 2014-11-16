@@ -25,6 +25,7 @@
     "gulp-shell": "^0.2.10",
     "mocha": "^2.0.1",
     "nodejs-externs": "^0.10.0",
+    "request": "^2.48.0",
     "run-sequence": "^1.0.1"
   }
 }
