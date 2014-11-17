@@ -34,18 +34,17 @@ var consumer = new Consumer({
 ```
 
 Now that we have instantiated our object, we have two ways of funding the
-channel. The first one is to send bitcoins to an address that is provided by
-the Consumer instance (a private key is created for this purpose). A second way
-(which could be thought of as an "advanced" usage) is to provide a set of
-unspent outputs and the corresponding private keys.
+channel. The basic one is to send bitcoins to an address that is provided by
+the Consumer instance (a private key is created for this purpose).
 
 ```javascript
 console.info('Send bitcoins to ' + consumer.fundingAddress.toString() ' to fund the channel');
 
-// As an alternative way, inputs and private keys can be added to the commitment transaction
-consumer.commitmentTx.addInput({txid: "...", vout: 0, scriptPubKey: "...", ...});
-consumer.commitmentTx.addKey('01234567...');
+consumer.processFunding([{...}, {...}, {...}]);
 ```
+
+The objects that the consumer can understand are those returned by the Insight API:
+[https://github.com/bitpay/insight-api#unspent-outputs]
 
 Once funded, we'll need the server to sign the refund transaction that allows
 us to reclaim our funds in case the server vanishes.
