@@ -13,7 +13,7 @@ var nodeJsExterns = require('nodejs-externs');
 
 
 var files = ['lib/**/*.js'];
-var tests = ['test/**/*.spec.js'];
+var tests = ['test/**/*.js'];
 var alljs = files.concat(tests);
 var readme = 'README.md';
 
