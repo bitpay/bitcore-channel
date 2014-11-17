@@ -52,21 +52,40 @@ describe('Simple Payment Channel example from README', function() {
   describe('a simple provider', function() {
 
     it('gets created correctly', function() {
+      var provider = getProvider();
+      // TODO: no assertions?
     });
 
     it('signs a refund', function() {
+      var provider = getProvider();
+      var consumer = getValidatedConsumer().consumer;
+      consumer.incrementPaymentBy(1);
+      provider.signRefund(consumer.getRefundTxToSign());
     });
 
     it('validates a payment', function() {
+      var provider = getProvider();
+      var consumer = getValidatedConsumer().consumer;
+      consumer.incrementPaymentBy(1000);
+      assert(provider.validPayment(consumer.sendToProvider()));
+      assert(provider.currentAmount = 1000);
     });
 
     it('outputs a transaction from the last payment transaction', function() {
+      var provider = getProvider();
+      var consumer = getValidatedConsumer().consumer;
+      consumer.incrementPaymentBy(1000);
+      provider.validPayment(consumer.sendToProvider());
+      assert(provider.getPaymentTx() instanceof bitcore.Transaction);
     });
   });
 
   describe('interaction between provider and consumer', function() {
 
     it('works correctly in an integration test', function() {
+      var provider = getProvider();
+      var consumer = getFundedConsumer().consumer;
+      consumer.validateRefund(provider.signRefund(consumer.getRefundTxToSign()));
     });
 
   });
@@ -133,4 +152,13 @@ var getValidatedConsumer = function() {
   return {
     consumer: funded
   };
+};
+
+var getProvider = function() {
+  var Provider = require('../').Provider;
+  return new Provider({
+    key: providerKey,
+    paymentAddress: 'n3vNjpQB8GUVNz5R2hSM8rq4EgMEQqS4AZ',
+    network: 'testnet'
+  });
 };
