@@ -1,5 +1,6 @@
-var bitcore = require('bitcore');
+var _ = require('lodash');
 var assert = require('assert');
+var bitcore = require('bitcore');
 
 describe('Simple Payment Channel example from README', function() {
 
@@ -13,7 +14,7 @@ describe('Simple Payment Channel example from README', function() {
 
     it('processes an output', function() {
       var consumer = getFundedConsumer().consumer;
-      assert(consumer.commitmentTx.amount === 1000000);
+      assert(consumer.commitmentTx.amount === 1100000);
       assert(consumer.getRefundTxToSign());
     });
 
@@ -25,7 +26,16 @@ describe('Simple Payment Channel example from README', function() {
     it('has no false positive on refund validation', function() {
       var consumer = getFundedConsumer().consumer;
       consumer.getRefundTxToSign();
-      consumer.refundTx.sign([consumer.commitmentWalletKey]);
+
+      // Try to sign with fake private Key
+      var key = new bitcore.Key();
+      key.private = new Buffer('0000000000000000000000000000000000000000000000000000deadbeafdead', 'hex');
+      key.regenerateSync();
+
+      consumer.refundTx.sign([new bitcore.WalletKey({
+        network: bitcore.networks.testnet,
+        privKey: key
+      })]);
 
       var failed = false;
       try {
@@ -76,7 +86,7 @@ describe('Simple Payment Channel example from README', function() {
       var consumer = getValidatedConsumer().consumer;
       consumer.incrementPaymentBy(1000);
       provider.validPayment(consumer.sendToProvider());
-      assert(provider.getPaymentTx() instanceof bitcore.Transaction);
+      assert(_.isString(provider.getPaymentTx()));
     });
   });
 
@@ -108,7 +118,7 @@ var getConsumer = function() {
   commitmentKey.regenerateSync();
 
   var Consumer = require('../').Consumer;
-  var serverPublicKey = '023bc028f67697712efeb0216ef1bc7208e2c9156bf0731204d79328f4c8ef643a';
+  var serverPublicKey = commitmentKey.public.toString('hex');
   var refundAddress = 'mzCXqcsLBerwyoRZzBFQELHaJ1ZtBSxxe6';
 
   var consumer = new Consumer({
@@ -128,15 +138,7 @@ var getConsumer = function() {
 
 var getFundedConsumer = function() {
   var result = getConsumer();
-  result.consumer.processFunding({
-    "address":"mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1",
-    "txid":"c1003b5e2c9f5eca65bde73463035e5dffcfbd3c234e55e069cfeebb513293e4",
-    "vout":0,
-    "ts":1416196655,
-    "scriptPubKey":"76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac",
-    "amount":0.01,
-    "confirmationsFromCache":false
-  });
+  result.consumer.processFunding([{"address":"mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1","txid":"787ef38932601aa6d22b844770121f713b0afb6c13fdd52e512c6165508f47cd","vout":1,"ts":1416205164,"scriptPubKey":"76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac","amount":0.001,"confirmationsFromCache":false},{"address":"mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1","txid":"c1003b5e2c9f5eca65bde73463035e5dffcfbd3c234e55e069cfeebb513293e4","vout":0,"ts":1416196853,"scriptPubKey":"76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac","amount":0.01,"confirmations":18,"confirmationsFromCache":false}]);
   return result;
 };
 
