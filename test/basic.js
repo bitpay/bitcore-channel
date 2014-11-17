@@ -4,7 +4,7 @@ var assert = require('assert');
 describe('Simple Payment Channel example from README', function() {
 
   describe('a simple consumer', function() {
-    
+
     it('correctly gets created', function() {
       var consumer = getConsumer().consumer;
       assert(consumer.fundingKey.toString());
@@ -23,11 +23,21 @@ describe('Simple Payment Channel example from README', function() {
     });
 
     it('has no false positive on refund validation', function() {
-      throw new Error('Test missing');
-    });
+      var consumer = getFundedConsumer().consumer;
+      consumer.getRefundTxToSign();
+      consumer.refundTx.sign([consumer.commitmentWalletKey]);
 
-    it('has no false negatives on refund validation', function() {
-      throw new Error('Test missing');
+      var failed = false;
+      try {
+        consumer.validateRefund({
+          refund: consumer.refundTx.serialize(),
+          paymentAddress: 'mgeLZRkELTysge5dvpo2ixGNgG2biWwRXC'
+        });
+      } catch (e) {
+        failed = true;
+      } finally {
+        assert(failed);
+      }
     });
 
     it('can increment a payment', function() {
@@ -69,8 +79,6 @@ var providerWalletKey = new bitcore.WalletKey({
   privKey: providerKey,
   network: bitcore.networks['testnet']
 });
-
-var serverAddress = providerWalletKey.storeObj().address;
 
 var getConsumer = function() {
   var fundingKey = new bitcore.Key();
@@ -120,7 +128,9 @@ var getValidatedConsumer = function() {
   funded.refundTx.sign([funded.commitmentWalletKey]);
   funded.validateRefund({
     refund: funded.refundTx.serialize(),
-    paymentAddress: serverAddress
+    paymentAddress: 'mgeLZRkELTysge5dvpo2ixGNgG2biWwRXC'
   });
-  return funded;
+  return {
+    consumer: funded
+  };
 };
