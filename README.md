@@ -51,7 +51,52 @@ Once funded, we'll need the server to sign the refund transaction that allows
 us to reclaim our funds in case the server vanishes.
 
 ```javascript
-var messageToServer = consumer.getRefundTxToSign();
+var messageToProvider = consumer.getRefundTxToSign();
 ```
 
+Now let's take a look at the Provider side. We'll need to specify a final
+address where to send our funds.
 
+```javascript
+var Provider = require('bitcore-channel').Provider;
+var paymentAddress = 'mig4mc6q7PTQ2YZ9ax5YtR4gjARfoqJSZd';
+
+var provider = new Provider({
+  network: 'testnet',
+  paymentAddress: paymentAddress
+});
+console.info('Share this public key with potential consumers: ' + provider.getPublicKey());
+```
+
+So when we receive a refund transaction from a consumer, we can easily sign it
+and return it back.
+
+```javascript
+var messageToConsumer = provider.signRefund(receivedRefund);
+```
+
+As a consumer, we'd like to validate that the refund received is valid. If it
+is valid, we can start paying the Provider.
+
+```javascript
+assert(consumer.validateRefund(messageFromProvider));
+
+consumer.incrementPaymentBy(400 * SATOSHIS);
+sendToProvider(consumer.getPayment());
+consumer.incrementPaymentBy(4 * BITS);
+sendToProvider(consumer.getPayment());
+```
+
+The Provider will like to verify that the transaction is indeed valid and the
+expected value is being received:
+
+```javascript
+assert(provider.validPayment(messageFromConsumer));
+assert(provider.currentAmount === 8 * BITS);
+```
+
+Of course, he can also interrupt the channel and broadcast the transaction.
+
+```javascript
+provider.getPaymentTx();
+```
