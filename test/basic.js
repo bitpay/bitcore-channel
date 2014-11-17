@@ -18,22 +18,24 @@ describe('Simple Payment Channel example from README', function() {
     });
 
     it('validates a refund correctly', function() {
-      var consumer = getFundedConsumer().consumer;
-      consumer.getRefundTxToSign();
-      consumer.refundTx.sign([providerWalletKey]);
-      assert(consumer.validateRefund({
-        refund: consumer.refundTx.serialize(),
-        paymentAddress: serverAddress
-      }));
+      var consumer = getValidatedConsumer().consumer;
+      assert(consumer.refundTx.isSigned());
     });
 
     it('has no false positive on refund validation', function() {
+      throw new Error('Test missing');
     });
 
     it('has no false negatives on refund validation', function() {
+      throw new Error('Test missing');
     });
 
     it('can increment a payment', function() {
+      var consumer = getValidatedConsumer().consumer;
+      consumer.incrementPaymentBy(1000);
+      assert(consumer.paymentTx.paid === 1000);
+      consumer.incrementPaymentBy(1000);
+      assert(consumer.paymentTx.paid === 2000);
     });
   });
 
@@ -79,7 +81,7 @@ var getConsumer = function() {
   commitmentKey.regenerateSync();
 
   var Consumer = require('../').Consumer;
-  var serverPublicKey = '027f10e67bea70f847b3ab92c18776c6a97a78f84def158afc31fd98513d42912e';
+  var serverPublicKey = '023bc028f67697712efeb0216ef1bc7208e2c9156bf0731204d79328f4c8ef643a';
   var refundAddress = 'mzCXqcsLBerwyoRZzBFQELHaJ1ZtBSxxe6';
 
   var consumer = new Consumer({
@@ -109,4 +111,16 @@ var getFundedConsumer = function() {
     "confirmationsFromCache":false
   });
   return result;
+};
+
+var getValidatedConsumer = function() {
+  var funded = getFundedConsumer().consumer;
+  funded.getRefundTxToSign();
+  funded.refundTx.sign([providerWalletKey]);
+  funded.refundTx.sign([funded.commitmentWalletKey]);
+  funded.validateRefund({
+    refund: funded.refundTx.serialize(),
+    paymentAddress: serverAddress
+  });
+  return funded;
 };

@@ -20,7 +20,7 @@ var pro = new Provider({
 
 var Consumer = require('../lib/Consumer');
 
-var con = new Consumer({network: 'testnet', serverPublicKey: proKey.public, refundAddress: 'mqB4k1cqzfojmoa7PzyMSksM17gUpSTe6n', commitmentKey: conKey, fundingKey: fundingKey});
+var con = new Consumer({network: 'testnet', serverPublicKey: proKey, refundAddress: 'mqB4k1cqzfojmoa7PzyMSksM17gUpSTe6n', commitmentKey: conKey, fundingKey: fundingKey});
 con.fundingAddress.toString();
 con.commitmentTx.getAddress().toString()
 
@@ -49,4 +49,5 @@ var proWalletKey = new bitcore.WalletKey({
 
 e.sign([conWalletKey]);
 e.sign([proWalletKey]);
+e = new Refund(JSON.parse(e.serialize()));
 console.log(e.build());
