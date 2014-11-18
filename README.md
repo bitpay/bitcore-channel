@@ -23,12 +23,14 @@ in case the contract is cancelled.
 
 ```javascript
 var Consumer = require('bitcore-channel').Consumer;
-var serverPublicKey = '027f10e67bea70f847b3ab92c18776c6a97a78f84def158afc31fd98513d42912e';
+var providerPublicKey = '027f10e67bea70f847b3ab92c18776c6a97a78f84def158afc31fd98513d42912e';
 var refundAddress = 'mzCXqcsLBerwyoRZzBFQELHaJ1ZtBSxxe6';
+var providerAddress = 'mrCHmWgn54hJNty2srFF4XLmkey5GnCv5m';
 
 var consumer = new Consumer({
   network: 'testnet',
-  serverPublicKey: serverPublicKey,
+  providerPublicKey: providerPublicKey,
+  providerAddress: providerAddress,
   refundAddress: refundAddress
 });
 ```
