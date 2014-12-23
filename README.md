@@ -52,7 +52,7 @@ Once funded, we'll need the server to sign the refund transaction that allows
 us to reclaim our funds in case the server vanishes.
 
 ```javascript
-var messageToProvider = consumer.getRefundTxToSign();
+var messageToProvider = consumer.setupRefund();
 ```
 
 Now let's take a look at the Provider side. We'll need to specify a final
@@ -82,10 +82,8 @@ is valid, we can start paying the Provider.
 ```javascript
 assert(consumer.validateRefund(messageFromProvider));
 
-consumer.incrementPaymentBy(400 * SATOSHIS);
-sendToProvider(consumer.getPayment());
-consumer.incrementPaymentBy(4 * BITS);
-sendToProvider(consumer.getPayment());
+sendToProvider(consumer.incrementPaymentBy(400 * SATOSHIS);)
+sendToProvider(consumer.incrementPaymentBy(4 * BITS));
 ```
 
 The Provider will like to verify that the transaction is indeed valid and the
