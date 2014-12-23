@@ -1,7 +1,18 @@
 {
-  "name": "foo",
-  "version": "0.0.0",
-  "dependencies": {
-    "closure-compiler": "http://dl.google.com/closure-compiler/compiler-latest.zip"
-  }
+  "name": "bitcore-channel",
+  "version": "0.0.1",
+  "main": "dist/bitcore-channel.js",
+  "homepage": "https://github.com/eordano/bitcore-channel",
+  "ignore": [
+    "docs",
+    "examples",
+    "externs",
+    "lib",
+    "test",
+    "package.json",
+    "gulpfile.js",
+    "index.js",
+    ".jshintrc",
+    ".gitignore"
+  ]
 }

@@ -25,10 +25,6 @@ function testAllFiles() {
   return gulp.src(tests).pipe(new gulp_mocha({reporter: 'spec'}));
 }
 
-gulp.task('setup', gulp_shell.task([
-  'bower install'
-]));
-
 gulp.task('test', testAllFiles);
 
 gulp.task('test-nofail', function() {
@@ -61,8 +57,7 @@ gulp.task('compile', function() {
     .pipe(gulp_insert.append('})();'))
     .pipe(gulp_insert.prepend('(function() {'))
     .pipe(gulp_closureCompiler({
-      fileName: 'build.js',
-      compilerPath: 'bower_components/closure-compiler/compiler.jar',
+      fileName: 'bitcore-channel.js',
       compilerFlags: {
         language_in: 'ECMASCRIPT5_STRICT',
         warning_level: 'VERBOSE',
@@ -79,5 +74,5 @@ gulp.task('compile', function() {
 });
 
 gulp.task('default', function(callback) {
-  return gulp_runSequence('setup', ['lint', 'jsdoc', 'compile', 'test'], callback);
+  return gulp_runSequence(['lint', 'jsdoc', 'compile', 'test'], callback);
 });
