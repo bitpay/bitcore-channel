@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('lodash');
 
 var gulp = require('gulp');
@@ -9,6 +11,10 @@ var gulp_mocha = require('gulp-mocha');
 var gulp_runSequence = require('run-sequence');
 var gulp_shell = require('gulp-shell');
 
+var bump = require('gulp-bump');
+var git = require('gulp-git');
+var tag_version = require('gulp-tag-version');
+
 var nodeJsExterns = require('nodejs-externs');
 
 
@@ -19,6 +25,13 @@ var readme = 'README.md';
 
 function ignoreError(err) {
   this.emit('end');
+}
+
+function logError(err) {
+  if (err) {
+    console.log(err);
+    throw err;
+  }
 }
 
 function testAllFiles() {
@@ -60,7 +73,7 @@ gulp.task('compile', function() {
       fileName: 'bitcore-channel.js',
       compilerFlags: {
         language_in: 'ECMASCRIPT5_STRICT',
-        warning_level: 'VERBOSE',
+        // warning_level: 'VERBOSE',
         externs: [
           'externs/underscore-1.5.1.js',
           'externs/bitcore-0.1.39.js',
@@ -72,6 +85,96 @@ gulp.task('compile', function() {
     }))
     .pipe(gulp.dest('dist'));
 });
+
+/**
+ * Release automation
+ */
+
+gulp.task('release:install', function() {
+  return gulp_shell.task([
+    'npm install',
+  ]);
+});
+
+gulp.task('release:bump', function() {
+  return gulp.src(['./bower.json', './package.json'])
+    .pipe(bump({
+      type: 'patch'
+    }))
+    .pipe(gulp.dest('./'));
+});
+
+gulp.task('release:build-commit', function() {
+  var pjson = require('./package.json');
+  return gulp.src(['./package.json', './bower.json', './browser/bitcore.js', 'browser/bitcore.min.js'])
+    .pipe(git.tag('v' + pjson.version, 'Build: ' + pjson.version));
+});
+
+gulp.task('release:undo-commit', function() {
+  git.reset('HEAD^', {
+    args: '--hard'
+  }, logError);
+});
+
+gulp.task('release:version-commit', function() {
+  var pjson = require('./package.json');
+  return gulp.src(['./package.json', './bower.json'])
+    .pipe(git.commit('Bump package version to ' + pjson.version));
+});
+
+gulp.task('release:push-releases', function() {
+  git.push('eordano', 'releases', {
+    args: ''
+  }, logError);
+});
+
+gulp.task('release:push', function() {
+  git.push('eordano', 'master', {
+    args: ''
+  }, logError);
+});
+
+gulp.task('release:push-tag', function() {
+  var pjson = require('./package.json');
+  git.push('eordano', 'v' + pjson.version, {
+    args: ''
+  }, logError);
+});
+
+gulp.task('release:publish', gulp_shell.task([
+  'npm publish'
+]));
+
+// requires https://hub.github.com/
+gulp.task('release', function(cb) {
+  gulp_runSequence(
+    // Run npm install
+    ['release:install'],
+    // Build browser bundle
+    ['compile'],
+    // Update package.json and bower.json
+    ['release:bump'],
+    // Commit 
+    ['release:build-commit'],
+    // Run git tag -a $VERSION -m '$VERSION' with the new version number
+    ['release:tag'],
+    // Run git push bitpay $VERSION
+    ['release:push-tag'],
+    // Push to releases branch
+    ['release:push-releases'],
+    // Run npm publish
+    ['release:publish'],
+    // Checkout back to master
+    ['release:undo-commit'],
+    // Bump version
+    ['release:bump'],
+    // Version commit with no binary files to master
+    ['release:version-commit'],
+    // Push to master
+    ['release:push'],
+    cb);
+});
+
 
 gulp.task('default', function(callback) {
   return gulp_runSequence(['lint', 'jsdoc', 'compile', 'test'], callback);

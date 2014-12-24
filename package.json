@@ -11,6 +11,7 @@
   "repository": "https://github.com/eordano/bitcore-channel",
   "dependencies": {
     "bitcore": "^0.1.38",
+    "gulp-bump": "^0.1.11",
     "inherits": "^2.0.1",
     "lodash": "^2.4.1",
     "preconditions": "^1.0.8"
@@ -18,11 +19,13 @@
   "devDependencies": {
     "gulp": "^3.8.10",
     "gulp-closure-compiler": "^0.2.8",
+    "gulp-git": "^0.5.5",
     "gulp-insert": "^0.4.0",
     "gulp-jsdoc": "^0.1.4",
     "gulp-jshint": "^1.9.0",
     "gulp-mocha": "^1.0.0",
     "gulp-shell": "^0.2.10",
+    "gulp-tag-version": "^1.2.1",
     "mocha": "^2.0.1",
     "nodejs-externs": "^0.10.0",
     "request": "^2.48.0",
