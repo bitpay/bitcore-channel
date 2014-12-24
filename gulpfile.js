@@ -133,8 +133,8 @@ gulp.task('release:undo-commit', function(cb) {
 gulp.task('release:version-commit', function(cb) {
   var pjson = require('./package.json');
   var files = ['./package.json', './bower.json'];
-  gulp.src(files)
-    .pipe(git.commit('Bump package version to ' + pjson.version, {args: ''}, cb));
+  return gulp.src(files)
+    .pipe(git.commit('Bump package version to ' + pjson.version, {args: ''}));
 });
 
 gulp.task('release:push-releases', function(cb) {
