@@ -124,13 +124,7 @@ gulp.task('release:build-commit', function(cb) {
     .pipe(git.commit('Build: ' + pjson.version, {args: ''}, cb));
 });
 
-gulp.task('release:undo-commit', function(cb) {
-  git.reset('HEAD^', {
-    args: '--hard'
-  }, logError, cb);
-});
-
-gulp.task('release:version-commit', function(cb) {
+gulp.task('release:version-commit', function() {
   var pjson = require('./package.json');
   var files = ['./package.json', './bower.json'];
   return gulp.src(files)
