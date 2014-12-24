@@ -120,7 +120,7 @@ gulp.task('release:version-commit', function() {
   var pjson = require('./package.json');
   var files = ['./package.json', './bower.json'];
   return gulp.src(files)
-    .pipe(git.commit('Bump package version to ' + pjson.version, {args: '-a'}));
+    .pipe(git.commit('Bump package version to ' + pjson.version, {args: ''}));
 });
 
 gulp.task('release:push-releases', function(cb) {
