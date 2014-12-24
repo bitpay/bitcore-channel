@@ -83,7 +83,7 @@ gulp.task('compile', function() {
         jscomp_off: ['nonStandardJsDocs']
       }
     }))
-    .pipe(gulp.dest('dist'));
+    .pipe(gulp.dest('browser'));
 });
 
 /**
@@ -104,40 +104,44 @@ gulp.task('release:bump', function() {
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('release:build-commit', function() {
+gulp.task('release:build-commit', function(cb) {
   var pjson = require('./package.json');
-  gulp.src(['./package.json', './bower.json', './browser/bitcore.js', 'browser/bitcore.min.js'])
-    .pipe(git.commit('Build: ' + pjson.version, {args: ''}));
+  gulp.src(['./browser/bitcore-channel.js'])
+    .pipe(git.add());
+  return gulp.src(['./package.json', './bower.json', './browser/bitcore-channel.js'])
+    .pipe(git.commit('Build: ' + pjson.version, {args: ''}, cb));
 });
 
-gulp.task('release:undo-commit', function() {
+gulp.task('release:undo-commit', function(cb) {
   git.reset('HEAD^', {
     args: '--hard'
-  }, logError);
+  }, logError, cb);
 });
 
-gulp.task('release:version-commit', function() {
+gulp.task('release:version-commit', function(cb) {
   var pjson = require('./package.json');
   var files = ['./package.json', './bower.json'];
   return gulp.src(files)
-    .pipe(git.commit('Bump package version to ' + pjson.version, {args: ''}));
+    .pipe(git.commit('Bump package version to ' + pjson.version, {args: ''}, cb));
 });
 
 gulp.task('release:push-releases', function(cb) {
-  git.push('origin', 'releases', {
+  return git.push('origin', 'releases', {
     args: ''
   }, cb);
 });
 
 gulp.task('release:push', function(cb) {
-  git.push('origin', 'master', {
+  return git.push('origin', 'master', {
     args: ''
   }, cb);
 });
 
 gulp.task('release:push-tag', function(cb) {
   var pjson = require('./package.json');
-  git.push('origin', 'v' + pjson.version, {
+  var name = 'v' + pjson.version;
+  git.tag(name, 'Release ' + name);
+  return git.push('origin', name, {
     args: '--tags'
   }, cb);
 });
