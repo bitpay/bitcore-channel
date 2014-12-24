@@ -1,6 +1,6 @@
 {
   "name": "bitcore-channel",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A library for payment channels",
   "scripts": {
     "build": "gulp",
