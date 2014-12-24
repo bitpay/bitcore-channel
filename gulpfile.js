@@ -104,6 +104,18 @@ gulp.task('release:bump', function() {
     .pipe(gulp.dest('./'));
 });
 
+gulp.task('release:checkout-releases', function(cb) {
+  git.checkout('releases', {args: ''}, cb);
+});
+
+gulp.task('release:merge-master', function(cb) {
+  git.merge('master', {args: ''}, cb);
+});
+
+gulp.task('release:checkout-master', function(cb) {
+  git.checkout('master', {args: ''}, cb);
+});
+
 gulp.task('release:build-commit', function(cb) {
   var pjson = require('./package.json');
   gulp.src(['./browser/bitcore-channel.js'])
@@ -154,6 +166,10 @@ gulp.task('release:publish', gulp_shell.task([
 // requires https://hub.github.com/
 gulp.task('release', function(cb) {
   gulp_runSequence(
+    // Checkout the `releases` branch
+    ['release:checkout-releases'],
+    // Merge the master branch
+    ['release:merge-master'],
     // Run npm install
     ['release:install'],
     // Build browser bundle
@@ -168,8 +184,8 @@ gulp.task('release', function(cb) {
     ['release:push-releases'],
     // Run npm publish
     ['release:publish'],
-    // Checkout back to master
-    ['release:undo-commit'],
+    // Checkout the `master` branch
+    ['release:checkout-master'],
     // Bump version
     ['release:bump'],
     // Version commit with no binary files to master
