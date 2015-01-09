@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var assert = require('assert');
 var bitcore = require('bitcore');
 var Networks = require('bitcore/lib/networks');
@@ -113,10 +112,7 @@ var getValidatedConsumer = function() {
   var funded = getFundedConsumer().consumer;
   funded.setupRefund();
   funded.refundTx.sign(providerKey);
-  funded.validateRefund({
-    refund: funded.refundTx.toObject(),
-    paymentAddress: providerAddress
-  });
+  funded.validateRefund(funded.refundTx.toObject());
   return {
     consumer: funded
   };
