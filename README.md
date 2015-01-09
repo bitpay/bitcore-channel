@@ -4,15 +4,15 @@ bitcore-channel
 A library for building payment channel smart contracts.
 
 This is a first working prototype. Expect this API to change considerably, and
-will be more similar to `bitcoinj`'s implementation of Payment Channels.
+become similar to `bitcoinj`'s implementation of Payment Channels.
 
 Getting Started
 ---------------
 
-The library has two sides to it: the Consumer and the Provider of the service
-or good that is being transacted.
+The library has two sides to it: the Consumer and the Provider of the services
+or goods that are being transacted.
 
-Let's start with an overview of how to use the Consumer aspect. Let's asume
+Let's start with an overview of how to use the Consumer side. Let's asume
 that we know the server's public key and that we have it in a string, encoded
 in hexa ascii values, in compressed format.
 
@@ -82,7 +82,7 @@ is valid, we can start paying the Provider.
 ```javascript
 assert(consumer.validateRefund(messageFromProvider));
 
-sendToProvider(consumer.incrementPaymentBy(400 * SATOSHIS);)
+sendToProvider(consumer.incrementPaymentBy(400 * SATOSHIS));
 sendToProvider(consumer.incrementPaymentBy(4 * BITS));
 ```
 

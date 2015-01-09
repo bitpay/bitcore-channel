@@ -1,71 +1,187 @@
-var _ = require('lodash');
+/**
+ * @file gulpfile.js
+ *
+ * Defines tasks that can be run on gulp.
+ *
+ * Summary: <ul>
+ * <li> `test` - runs all the tests on node and the browser (mocha and karma)
+ * <ul>
+ * <li> `test:node`
+ * <li> `test:node:nofail` - internally used for watching (due to bug on gulp-mocha)
+ * <li> `test:browser`
+ * </ul>`
+ * <li> `watch:test` - watch for file changes and run tests
+ * <ul>
+ * <li> `watch:test:node`
+ * <li> `watch:test:browser`
+ * </ul>`
+ * <li> `browser` - generate files needed for browser (browserify)
+ * <ul>
+ * <li> `browser:uncompressed` - build `bitcore-channel.js`
+ * <li> `browser:compressed` - build `bitcore-channel.min.js`
+ * <li> `browser:maketests` - build `tests.js`, needed for testing without karma
+ * </ul>`
+ * <li> `errors` - autogenerate the `./lib/errors/index.js` file with error definitions
+ * <li> `lint` - run `jshint`
+ * <li> `coverage` - run `istanbul` with mocha to generate a report of test coverage
+ * <li> `coveralls` - updates coveralls info
+ * <li> `release` - automates release process (only for bitcore maintainers)
+ * </ul>
+ */
+'use strict';
 
 var gulp = require('gulp');
-var gulp_closureCompiler = require('gulp-closure-compiler');
-var gulp_insert = require('gulp-insert');
-var gulp_jsdoc = require('gulp-jsdoc');
-var gulp_jshint = require('gulp-jshint');
-var gulp_mocha = require('gulp-mocha');
-var gulp_runSequence = require('run-sequence');
-var gulp_shell = require('gulp-shell');
 
+var closureCompiler = require('gulp-closure-compiler');
+var coveralls = require('gulp-coveralls');
+var gutil = require('gulp-util');
+var insert = require('gulp-insert');
+var jshint = require('gulp-jshint');
+var mocha = require('gulp-mocha');
 var nodeJsExterns = require('nodejs-externs');
-
+var rename = require('gulp-rename');
+var runSequence = require('run-sequence');
+var shell = require('gulp-shell');
+var uglify = require('gulp-uglify');
 
 var files = ['lib/**/*.js'];
 var tests = ['test/**/*.js'];
 var alljs = files.concat(tests);
-var readme = 'README.md';
 
-function ignoreError(err) {
+function ignoreError() {
+  /* jshint ignore:start */ // using `this` in this context is weird 
   this.emit('end');
+  /* jshint ignore:end */
 }
 
-function testAllFiles() {
-  return gulp.src(tests).pipe(new gulp_mocha({reporter: 'spec'}));
-}
+var testMocha = function() {
+  return gulp.src(tests).pipe(new mocha({
+    reporter: 'spec'
+  }));
+};
 
-gulp.task('setup', gulp_shell.task([
-  'bower install'
+var testKarma = shell.task([
+  './node_modules/karma/bin/karma start --single-run --browsers Firefox'
+]);
+
+/**
+ * Testing
+ */
+
+gulp.task('test:node', ['errors'], testMocha);
+
+gulp.task('test:node:nofail', ['errors'], function() {
+  return testMocha().on('error', ignoreError);
+});
+
+gulp.task('test:browser', ['browser:uncompressed', 'browser:maketests'], testKarma);
+
+gulp.task('test', function(callback) {
+  runSequence(['test:node'], ['test:browser'], callback);
+});
+
+/**
+ * File generation
+ */
+
+gulp.task('browser:uncompressed', ['browser:makefolder', 'errors'], shell.task([
+  './node_modules/.bin/browserify index.js --insert-global-vars=true --standalone=bitcore-channel -o bitcore-channel.js'
 ]));
 
-gulp.task('test', testAllFiles);
-
-gulp.task('test-nofail', function() {
-  return testAllFiles().on('error', ignoreError);
+gulp.task('browser:compressed', ['browser:uncompressed'], function() {
+  return gulp.src('bitcore-channel.js')
+    .pipe(uglify({
+      mangle: true,
+      compress: true
+    }))
+    .pipe(rename('bitcore-channel.min.js'))
+    .pipe(gulp.dest('.'))
+    .on('error', gutil.log);
 });
+
+gulp.task('browser:maketests', ['browser:makefolder'], shell.task([
+  'find test/ -type f -name "*.js" | xargs ./node_modules/.bin/browserify -t brfs -o tests.js'
+]));
+
+gulp.task('browser', function(callback) {
+  runSequence(['browser:compressed'], ['browser:maketests'], callback);
+});
+
+gulp.task('errors', shell.task([
+  'node ./lib/errors/build.js'
+]));
+
+
+/**
+ * Code quality and documentation
+ */
+
+gulp.task('lint', function() {
+  return gulp.src(alljs)
+    .pipe(jshint())
+    .pipe(jshint.reporter('default'));
+});
+
+gulp.task('plato', shell.task(['plato -d report -r -l .jshintrc -t bitcore lib']));
+
+gulp.task('coverage', shell.task(['node_modules/.bin/./istanbul cover node_modules/.bin/_mocha -- --recursive']));
+
+gulp.task('coveralls', ['coverage'], function() {
+  gulp.src('coverage/lcov.info').pipe(coveralls());
+});
+
+/**
+ * Watch tasks
+ */
 
 gulp.task('watch:test', function() {
   // TODO: Only run tests that are linked to file changes by doing
   // something smart like reading through the require statements
-  return gulp.watch(alljs, ['lint', 'test-nofail']);
+  return gulp.watch(alljs, ['test']);
 });
 
-gulp.task('jsdoc', function() {
-  return gulp.src(files.concat([readme]))
-    .pipe(gulp_jsdoc.parser())
-    .pipe(gulp_jsdoc.generator('./docs', {
-      path: 'ink-docstrap',
-      theme: 'flatly',
-    }))
+gulp.task('watch:test:node', function() {
+  // TODO: Only run tests that are linked to file changes by doing
+  // something smart like reading through the require statements
+  return gulp.watch(alljs, ['test:node']);
 });
 
-gulp.task('lint', function() {
-  return gulp.src(alljs)
-    .pipe(gulp_jshint())
-    .pipe(gulp_jshint.reporter('default'));
+gulp.task('watch:test:browser', function() {
+  // TODO: Only run tests that are linked to file changes by doing
+  // something smart like reading through the require statements
+  return gulp.watch(alljs, ['test:browser']);
+});
+
+gulp.task('watch:jsdoc', function() {
+  // TODO: Only run tests that are linked to file changes by doing
+  // something smart like reading through the require statements
+  return gulp.watch(alljs, ['jsdoc']);
+});
+
+gulp.task('watch:coverage', function() {
+  // TODO: Only run tests that are linked to file changes by doing
+  // something smart like reading through the require statements
+  return gulp.watch(alljs, ['coverage']);
+});
+
+gulp.task('watch:lint', function() {
+  // TODO: Only lint files that are linked to file changes by doing
+  // something smart like reading through the require statements
+  return gulp.watch(alljs, ['lint']);
+});
+
+gulp.task('watch:browser', function() {
+  return gulp.watch(alljs, ['browser']);
 });
 
 gulp.task('compile', function() {
   return gulp.src(files)
-    .pipe(gulp_insert.append('})();'))
-    .pipe(gulp_insert.prepend('(function() {'))
-    .pipe(gulp_closureCompiler({
+    .pipe(insert.append('})();'))
+    .pipe(insert.prepend('(function() {'))
+    .pipe(closureCompiler({
       fileName: 'build.js',
-      compilerPath: 'bower_components/closure-compiler/compiler.jar',
       compilerFlags: {
         language_in: 'ECMASCRIPT5_STRICT',
-        warning_level: 'VERBOSE',
         externs: [
           'externs/underscore-1.5.1.js',
           'externs/bitcore-0.1.39.js',
@@ -78,6 +194,9 @@ gulp.task('compile', function() {
     .pipe(gulp.dest('dist'));
 });
 
+/* Default task */
 gulp.task('default', function(callback) {
-  return gulp_runSequence('setup', ['lint', 'jsdoc', 'compile', 'test'], callback);
+  return runSequence(['lint'], ['browser:uncompressed', 'test'], ['coverage', 'browser:compressed'],
+    callback);
 });
+
