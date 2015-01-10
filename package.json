@@ -16,6 +16,7 @@
     "lodash": "=2.4.1"
   },
   "devDependencies": {
+    "brfs": "^1.2.0",
     "gulp": "^3.8.10",
     "gulp-browserify": "^0.5.1",
     "gulp-closure-compiler": "^0.2.8",
