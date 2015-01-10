@@ -35,6 +35,7 @@ var gulp = require('gulp');
 var closureCompiler = require('gulp-closure-compiler');
 var coveralls = require('gulp-coveralls');
 var gutil = require('gulp-util');
+var browserify = require('browserify');
 var insert = require('gulp-insert');
 var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
@@ -43,6 +44,7 @@ var rename = require('gulp-rename');
 var runSequence = require('run-sequence');
 var shell = require('gulp-shell');
 var uglify = require('gulp-uglify');
+var transform = require('vinyl-transform');
 
 var files = ['lib/**/*.js'];
 var tests = ['test/**/*.js'];
@@ -84,9 +86,19 @@ gulp.task('test', function(callback) {
  * File generation
  */
 
-gulp.task('browser:uncompressed', ['browser:makefolder', 'errors'], shell.task([
-  './node_modules/.bin/browserify index.js --insert-global-vars=true --standalone=bitcore-channel -o bitcore-channel.js'
-]));
+gulp.task('browser:uncompressed', ['errors'], function() {
+
+  var browserified = transform(function(filename) {
+    return browserify(filename)
+      .require(filename, { expose: 'bitcore-channel' })
+      .external('bitcore')
+      .bundle();
+  });
+  return gulp.src('./index.js')
+    .pipe(browserified)
+    .pipe(rename('bitcore-channel.js'))
+    .pipe(gulp.dest('./'));
+});
 
 gulp.task('browser:compressed', ['browser:uncompressed'], function() {
   return gulp.src('bitcore-channel.js')
@@ -99,7 +111,7 @@ gulp.task('browser:compressed', ['browser:uncompressed'], function() {
     .on('error', gutil.log);
 });
 
-gulp.task('browser:maketests', ['browser:makefolder'], shell.task([
+gulp.task('browser:maketests', shell.task([
   'find test/ -type f -name "*.js" | xargs ./node_modules/.bin/browserify -t brfs -o tests.js'
 ]));
 
