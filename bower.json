@@ -6,7 +6,7 @@
   "authors": [
     "BitPay"
   ],
-  "description": "ECIES implemented for Bitcore.",
+  "description": "Payment Channels implemented for Bitcore.",
   "moduleType": [
     "globals"
   ],
