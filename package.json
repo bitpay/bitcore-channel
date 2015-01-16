@@ -1,6 +1,6 @@
 {
   "name": "bitcore-channel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Add payment channels support to bitcore",
   "scripts": {
     "lint": "gulp lint",
