@@ -38,5 +38,7 @@ node_modules
 
 *.sw[a-z]
 
-# Generated errors
-lib/errors/index.js
+# browser bundles
+bitcore-channel.js
+bitcore-channel.min.js
+tests.js
