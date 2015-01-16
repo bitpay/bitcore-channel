@@ -3,10 +3,20 @@
   "version": "0.1.0",
   "description": "Add payment channels support to bitcore",
   "scripts": {
-    "build": "gulp",
-    "test": "gulp test"
+    "lint": "gulp lint",
+    "test": "gulp test",
+    "coverage": "gulp coverage"
   },
   "author": "Esteban Ordano <eordano@gmail.com>",
+  "keywords": [
+    "bitcoin",
+    "bitcore",
+    "btc",
+    "satoshi",
+    "payment channels",
+    "channel",
+    "smart contract"
+  ],
   "license": "MIT",
   "repository": "https://github.com/eordano/bitcore-channel",
   "dependencies": {
