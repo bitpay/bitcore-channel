@@ -26,15 +26,11 @@
     "lodash": "=2.4.1"
   },
   "devDependencies": {
-    "bitcore-build": "^0.4.1",
+    "bitcore-build": "=0.4.2",
     "brfs": "^1.2.0",
-    "browserify": "^8.1.1",
     "gulp": "^3.8.10",
-    "istanbul": "^0.3.5",
-    "mocha": "^2.0.1",
     "nodejs-externs": "^0.10.0",
     "request": "^2.48.0",
-    "run-sequence": "^1.0.2",
     "vinyl-transform": "^1.0.0"
   }
 }
