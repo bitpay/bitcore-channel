@@ -3,7 +3,7 @@ description:
 ---
 # Payment Channels
 
-A library for building payment channel smart contracts.
+Bitcore includes classes necessary to handle payment channel smart contracts. The approach taken is networking-agnostic, so this library can be used at any layer. 
 
 ## Installation
 
