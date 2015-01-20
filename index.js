@@ -2,11 +2,11 @@
 require('./lib/errors');
 
 module.exports = {
-  Consumer: require('./lib/Consumer'),
-  Provider: require('./lib/Provider'),
+  Consumer: require('./lib/consumer'),
+  Provider: require('./lib/provider'),
   Transactions: {
-    Commitment: require('./lib/transactions/Commitment'),
-    Refund: require('./lib/transactions/Refund'),
-    Payment: require('./lib/transactions/Payment')
+    Commitment: require('./lib/transactions/commitment'),
+    Refund: require('./lib/transactions/refund'),
+    Payment: require('./lib/transactions/payment')
   }
 };
