@@ -26,7 +26,7 @@
     "lodash": "=2.4.1"
   },
   "devDependencies": {
-    "bitcore-build": "^0.5.0",
+    "bitcore-build": "git://github.com/bitpay/bitcore-build.git",
     "brfs": "^1.2.0",
     "gulp": "^3.8.10",
     "nodejs-externs": "^0.10.0",
