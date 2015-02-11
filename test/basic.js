@@ -112,7 +112,8 @@ var getValidatedConsumer = function() {
   var funded = getFundedConsumer().consumer;
   funded.setupRefund();
   funded.refundTx.sign(providerKey);
-  funded.validateRefund(funded.refundTx.toObject());
+  var refund = funded.refundTx.toObject();
+  funded.validateRefund(refund);
   return {
     consumer: funded
   };
