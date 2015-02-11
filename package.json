@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": "https://github.com/eordano/bitcore-channel",
   "dependencies": {
-    "bitcore": "^0.10.1",
+    "bitcore": "^0.10.2",
     "browserify": "^8.1.0",
     "inherits": "=2.0.1"
   },
