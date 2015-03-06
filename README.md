@@ -1,3 +1,4 @@
+<img src="http://bitcore.io/css/images/module-channel.png" alt="bitcore payment channels" height="35">
 # Payment channels for bitcore
 
 [![NPM Package](https://img.shields.io/npm/v/bitcore-channel.svg?style=flat-square)](https://www.npmjs.org/package/bitcore-channel)
