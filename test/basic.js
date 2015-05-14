@@ -4,7 +4,7 @@ var assert = require('assert');
 var bitcore = require('bitcore');
 var Networks = require('bitcore/lib/networks');
 
-describe('Simple Payment Channel example from README', function() {
+describe('Simple Payment Channel usage', function() {
 
   describe('a simple consumer', function() {
 
@@ -103,7 +103,24 @@ var getConsumer = function() {
 
 var getFundedConsumer = function() {
   var result = getConsumer();
-  result.consumer.processFunding([{"address":"mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1","txid":"787ef38932601aa6d22b844770121f713b0afb6c13fdd52e512c6165508f47cd","vout":1,"ts":1416205164,"scriptPubKey":"76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac","amount":0.001,"confirmationsFromCache":false},{"address":"mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1","txid":"c1003b5e2c9f5eca65bde73463035e5dffcfbd3c234e55e069cfeebb513293e4","vout":0,"ts":1416196853,"scriptPubKey":"76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac","amount":0.01,"confirmations":18,"confirmationsFromCache":false}]);
+  result.consumer.processFunding([{
+    'address': 'mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1',
+    'txid': '787ef38932601aa6d22b844770121f713b0afb6c13fdd52e512c6165508f47cd',
+    'vout': 1,
+    'ts': 1416205164,
+    'scriptPubKey': '76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac',
+    'amount': 0.001,
+    'confirmationsFromCache': false
+  }, {
+    'address': 'mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1',
+    'txid': 'c1003b5e2c9f5eca65bde73463035e5dffcfbd3c234e55e069cfeebb513293e4',
+    'vout': 0,
+    'ts': 1416196853,
+    'scriptPubKey': '76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac',
+    'amount': 0.01,
+    'confirmations': 18,
+    'confirmationsFromCache': false
+  }]);
   result.consumer.commitmentTx.sign(fundingKey);
   return result;
 };
