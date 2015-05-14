@@ -20,13 +20,14 @@
   "license": "MIT",
   "repository": "https://github.com/eordano/bitcore-channel",
   "dependencies": {
-    "bitcore": "^0.10.2",
+    "bitcore": "^0.12.0",
     "browserify": "^8.1.0",
     "inherits": "=2.0.1"
   },
   "devDependencies": {
     "bitcore-build": "git://github.com/bitpay/bitcore-build.git",
     "brfs": "^1.2.0",
+    "chai": "^2.3.0",
     "gulp": "^3.8.10",
     "nodejs-externs": "^0.10.0",
     "request": "^2.48.0",
