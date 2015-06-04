@@ -2,7 +2,7 @@
 
 var should = require('chai').should();
 var bitcore = require('bitcore');
-var Networks = require('bitcore/lib/networks');
+var Networks = bitcore.Networks;
 
 describe('Simple Payment Channel usage', function() {
 
