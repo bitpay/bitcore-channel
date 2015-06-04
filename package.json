@@ -7,7 +7,17 @@
     "test": "gulp test",
     "coverage": "gulp coverage"
   },
-  "author": "Esteban Ordano <eordano@gmail.com>",
+  "author": "BitPay <dev@bitpay.com>",
+  "contributors": [
+    {
+      "name": "Esteban Ordano",
+      "email": "eordano@gmail.com"
+    },
+    {
+      "name": "Manuel Araoz",
+      "email": "manuelaraoz@gmail.com"
+    }
+  ],
   "keywords": [
     "bitcoin",
     "bitcore",
@@ -18,10 +28,9 @@
     "smart contract"
   ],
   "license": "MIT",
-  "repository": "https://github.com/eordano/bitcore-channel",
+  "repository": "https://github.com/bitpay/bitcore-channel",
   "dependencies": {
     "bitcore": "^0.12.6",
-    "browserify": "^8.1.0",
     "inherits": "=2.0.1"
   },
   "devDependencies": {
