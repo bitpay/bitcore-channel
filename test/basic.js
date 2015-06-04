@@ -24,35 +24,32 @@ describe('Simple Payment Channel usage', function() {
             'prevTxId': '787ef38932601aa6d22b844770121f713b0afb6c13fdd52e512c6165508f47cd',
             'outputIndex': 1,
             'sequenceNumber': 4294967295,
-            'script': '483045022100d1905baf6c16cf6c2aefd23f57c000f607bac82eada248fb9ad40d2be46a0f2d022045da95d5b7767f2793f5ea9f8c4240de79ebe6cb8454fec706b8e11dca8fa891012103bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
-            'scriptString': '72 0x3045022100d1905baf6c16cf6c2aefd23f57c000f607bac82eada248fb9ad40d2be46a0f2d022045da95d5b7767f2793f5ea9f8c4240de79ebe6cb8454fec706b8e11dca8fa89101 33 0x03bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
+            'script': '483045022100e5e9a5660ed650b377d1063c57ba210d2f8e36f350489a5b0ca9b46eb8fb659a02205a6d336c2252b39fcb7534fdfc3a593a87b5c34c0d3ad27e25bd5edea027308a012103bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
+            'scriptString': '72 0x3045022100e5e9a5660ed650b377d1063c57ba210d2f8e36f350489a5b0ca9b46eb8fb659a02205a6d336c2252b39fcb7534fdfc3a593a87b5c34c0d3ad27e25bd5edea027308a01 33 0x03bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
             'output': {
-              'satoshis': 100000,
+              'satoshis': 50000000,
               'script': '76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac'
             }
           }, {
             'prevTxId': 'c1003b5e2c9f5eca65bde73463035e5dffcfbd3c234e55e069cfeebb513293e4',
             'outputIndex': 0,
             'sequenceNumber': 4294967295,
-            'script': '483045022100c3d8097771be0850c8134d1ff8fc854a4ad004b538cf19b08cb9e5d4734fa972022017f976bfdfc3ec8af5117eb07e2ed8588110ede7b21a4a9202cc239497c94bc3012103bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
-            'scriptString': '72 0x3045022100c3d8097771be0850c8134d1ff8fc854a4ad004b538cf19b08cb9e5d4734fa972022017f976bfdfc3ec8af5117eb07e2ed8588110ede7b21a4a9202cc239497c94bc301 33 0x03bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
+            'script': '47304402205d5c5ae33804c2842311bedca88474ee47d49efba2a3aece49e7039551cc98b00220338b5aed644a810b0d92c9717029a1dfe3808f8a5ce74ec4f5cc03c6a7af2148012103bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
+            'scriptString': '71 0x304402205d5c5ae33804c2842311bedca88474ee47d49efba2a3aece49e7039551cc98b00220338b5aed644a810b0d92c9717029a1dfe3808f8a5ce74ec4f5cc03c6a7af214801 33 0x03bca86b6a422d1ffec9fd0a1e8d37feaef4e41f76bbdde68852251b7ae8ca6fab',
             'output': {
-              'satoshis': 1000000,
+              'satoshis': 10000000,
               'script': '76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac'
             }
           }],
           'outputs': [{
-            'satoshis': 1090000,
+            'satoshis': 59990000,
             'script': 'a914fdeaa734587dfed0090c98fbf1bf8730009ddda887'
           }],
           'nLockTime': 0,
           'changeScript': 'OP_HASH160 20 0xfdeaa734587dfed0090c98fbf1bf8730009ddda8 OP_EQUAL',
           'changeIndex': 0
         },
-        'publicKeys': [
-          '027f10e67bea70f847b3ab92c18776c6a97a78f84def158afc31fd98513d42912e',
-          '023bc028f67697712efeb0216ef1bc7208e2c9156bf0731204d79328f4c8ef643a'
-        ],
+        'publicKeys': ['027f10e67bea70f847b3ab92c18776c6a97a78f84def158afc31fd98513d42912e', '023bc028f67697712efeb0216ef1bc7208e2c9156bf0731204d79328f4c8ef643a'],
         'network': 'testnet'
       };
       obj.should.deep.equal(expected);
@@ -60,7 +57,7 @@ describe('Simple Payment Channel usage', function() {
 
     it('processes an output', function() {
       var consumer = getFundedConsumer().consumer;
-      consumer.commitmentTx.amount.should.equal(1100000);
+      consumer.commitmentTx.amount.should.equal(60000000);
     });
 
     it('validates a refund correctly', function() {
@@ -116,6 +113,19 @@ describe('Simple Payment Channel usage', function() {
       provider.validPayment(consumer.incrementPaymentBy(1000));
       provider.currentAmount.should.equal(4000);
     });
+
+    it('calculates fees normally', function() {
+      var provider = getProvider();
+      var consumer = getValidatedConsumer().consumer;
+      provider.validPayment(consumer.incrementPaymentBy(1000));
+      provider.currentAmount.should.equal(1000);
+      provider.paymentTx.getFee().should.equal(10000);
+      provider.validPayment(consumer.incrementPaymentBy(1000));
+      provider.validPayment(consumer.incrementPaymentBy(1000));
+      provider.validPayment(consumer.incrementPaymentBy(1000));
+      provider.currentAmount.should.equal(4000);
+      provider.paymentTx.getFee().should.equal(10000);
+    });
   });
 });
 
@@ -153,7 +163,7 @@ var getFundedConsumer = function() {
     'vout': 1,
     'ts': 1416205164,
     'scriptPubKey': '76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac',
-    'amount': 0.001,
+    'amount': 0.5,
     'confirmationsFromCache': false
   }, {
     'address': 'mq9uqc4W8phHXRPt3ZWUdRpoZ9rkR67Dw1',
@@ -161,7 +171,7 @@ var getFundedConsumer = function() {
     'vout': 0,
     'ts': 1416196853,
     'scriptPubKey': '76a91469b678f36c91bf635ff6e9479edd3253a5dfd41a88ac',
-    'amount': 0.01,
+    'amount': 0.1,
     'confirmations': 18,
     'confirmationsFromCache': false
   }]);
