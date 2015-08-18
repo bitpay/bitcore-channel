@@ -19,6 +19,7 @@ describe('Simple Payment Channel usage', function() {
       var obj = consumer.commitmentTx.toObject();
       var expected = {
         'transaction': {
+          'hash': '591ad922bfab0d8d4bd359dbfb6d8006efd1082029af1d3d8bdc690f1908fb37',
           'version': 1,
           'inputs': [{
             'prevTxId': '787ef38932601aa6d22b844770121f713b0afb6c13fdd52e512c6165508f47cd',
