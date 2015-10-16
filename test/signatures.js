@@ -2,7 +2,7 @@
 
 var should = require('chai').should();
 var bitcore = require('bitcore-lib');
-var Networks = require('bitcore-lib/lib/networks');
+var Networks = bitcore.Networks;
 
 describe('signature checks', function() {
 
