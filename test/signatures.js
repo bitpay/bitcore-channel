@@ -1,8 +1,8 @@
 'use strict';
 
 var should = require('chai').should();
-var bitcore = require('bitcore');
-var Networks = require('bitcore/lib/networks');
+var bitcore = require('bitcore-lib');
+var Networks = require('bitcore-lib/lib/networks');
 
 describe('signature checks', function() {
 
