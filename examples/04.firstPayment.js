@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 var fs = require('fs');
-var bitcore = require('bitcore');
+var bitcore = require('bitcore-lib');
 var PrivateKey = bitcore.PrivateKey;
 var Consumer = require('../lib/Consumer');
 var Commitment = require('../lib/transactions/Commitment');

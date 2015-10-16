@@ -1,6 +1,6 @@
 'use strict';
 
-var bitcore = require('bitcore');
+var bitcore = require('bitcore-lib');
 var PrivateKey = bitcore.PrivateKey;
 
 var fundingKey = new PrivateKey('cb5dc68fbcaf37f29139b50fa4664b395c03e49deb966e5d49a629af005d0654');

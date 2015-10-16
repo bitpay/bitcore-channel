@@ -1,5 +1,5 @@
 var channel = require('../');
-var bitcore = require('bitcore');
+var bitcore = require('bitcore-lib');
 
 
 var refundKey = new bitcore.PrivateKey(bitcore.Networks.testnet);

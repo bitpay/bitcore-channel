@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": "https://github.com/bitpay/bitcore-channel",
   "dependencies": {
-    "bitcore": "^0.13.0",
+    "bitcore-lib": "^0.13.7",
     "inherits": "=2.0.1"
   },
   "devDependencies": {

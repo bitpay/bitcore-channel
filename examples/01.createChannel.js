@@ -1,5 +1,5 @@
 'use strict';
-var bitcore = require('bitcore');
+var bitcore = require('bitcore-lib');
 var fs = require('fs');
 var PrivateKey = bitcore.PrivateKey;
 var Consumer = require('../lib/Consumer');
