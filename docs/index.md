@@ -19,7 +19,7 @@ bower install bitcore-channel --save
 ## Getting Started
 The library has two sides to it: the Consumer and the Provider of the services or goods that are being transacted.
 
-Let's start with an overview of how to use the Consumer side. Let's asume that we know the server's public key and that we have it in a string, encoded in hexa ascii values, in compressed format.
+Let's start with an overview of how to use the Consumer side. Let's assume that we know the server's public key and that we have it in a string, encoded in hexa ascii values, in compressed format.
 
 We also have a final address that we'll use as a "change" address (sending here any funds that we didn't transact with the Provider). We'll call this the "refund" address, as it will also be the address where the refund will get to in case the contract is cancelled.
 
