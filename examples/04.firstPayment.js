@@ -31,5 +31,5 @@ var refund = JSON.parse(fs.readFileSync('signed.refund.log'));
 if (consumer.validateRefund(refund)) {
   consumer.incrementPaymentBy(10400);
   console.log(consumer.paymentTx.toString());
-  fs.writeFileSync('firstpayment.log', consumer.paymentTx.toJSON());
+  fs.writeFileSync('firstpayment.log', JSON.stringify(consumer.paymentTx));
 }

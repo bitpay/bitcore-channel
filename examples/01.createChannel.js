@@ -24,7 +24,7 @@ var insight = new bitcore.transport.explorers.Insight();
 insight.getUnspentUtxos(consumer.fundingAddress, function(err, utxos) {
   consumer.processFunding(utxos);
   consumer.commitmentTx._updateChangeOutput();
-  fs.writeFileSync('unsigned.refund.log', consumer.setupRefund().toJSON());
+  fs.writeFileSync('unsigned.refund.log', JSON.stringify(consumer.setupRefund()));
   console.log(consumer.commitmentTx.toString());
-  fs.writeFileSync('commitment.log', consumer.commitmentTx.toJSON());
+  fs.writeFileSync('commitment.log', JSON.stringify(consumer.commitmentTx));
 });

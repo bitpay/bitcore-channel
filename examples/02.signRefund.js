@@ -12,5 +12,5 @@ var provider = new Provider({
 
 var refund = JSON.parse(fs.readFileSync('unsigned.refund.log'));
 
-fs.writeFileSync('signed.refund.log', provider.signRefund(refund).refund.toJSON());
+fs.writeFileSync('signed.refund.log', JSON.stringify(provider.signRefund(refund).refund));
 
