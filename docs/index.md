@@ -7,12 +7,14 @@ Payment channels are implemented as a separate module and you must add it to you
 For node projects:
 
 ```
+npm install bitcore-lib --save
 npm install bitcore-channel --save
 ```
 
 For client-side projects:
 
 ```
+bower install bitcore-lib --save
 bower install bitcore-channel --save
 ```
 
@@ -24,12 +26,18 @@ Let's start with an overview of how to use the Consumer side. Let's assume that 
 We also have a final address that we'll use as a "change" address (sending here any funds that we didn't transact with the Provider). We'll call this the "refund" address, as it will also be the address where the refund will get to in case the contract is cancelled.
 
 ```javascript
+var bitcore = require('bitcore-lib');
 var Consumer = require('bitcore-channel').Consumer;
 var providerPublicKey = '027f10e67bea70f847b3ab92c18776c6a97a78f84def158afc31fd98513d42912e';
 var refundAddress = 'mzCXqcsLBerwyoRZzBFQELHaJ1ZtBSxxe6';
 var providerAddress = 'mrCHmWgn54hJNty2srFF4XLmkey5GnCv5m';
 
+// Make sure to save this, a good way is to use the bitcore-mnemonic library or
+// export a WIF format with fundingKey.toWIF()
+var fundingKey = new bitcore.PrivateKey();
+
 var consumer = new Consumer({
+  fundingKey: fundingKey,
   network: 'testnet',
   providerPublicKey: providerPublicKey,
   providerAddress: providerAddress,
