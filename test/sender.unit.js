@@ -20,12 +20,12 @@ console.log(receiverPrivateKey.publicKey);
   });
 
   it('should convert expiration time stamp', function() {
-    sender._convertExpirationTimeStamp().should.deep.equal(new Buffer('83aac4d000', 'hex'));
+    sender._convertExpirationTimeStamp().should.deep.equal(new Buffer('d0c4aa8300', 'hex'));
   });
 
   it('should generate a checklocktimeverify redeemscript', function() {
     var expected = '6321' + receiverPrivateKey.publicKey.toString() +
-      'ac670583aac4d000b1756821' + senderPrivateKey.publicKey.toString() +
+      'ac6705d0c4aa8300b1756821' + senderPrivateKey.publicKey.toString() +
       'ac';
 console.log(expected);
 console.log(new bitcore.Address(bitcore.crypto.Hash.sha256ripemd160(new Buffer(expected, 'hex')), 'testnet', bitcore.Address.PayToScriptHash));
