@@ -9,6 +9,8 @@ describe('Sender (party who wants to open a payment channel)', function() {
   var receiverPrivateKey = new bitcore.PrivateKey();
 console.log(senderPrivateKey.toWIF());
 console.log(receiverPrivateKey.toWIF());
+console.log(senderPrivateKey.publicKey);
+console.log(receiverPrivateKey.publicKey);
   var past2038 = new Date('2040-01-01Z');
   var sender = new Sender({
     expirationTime: past2038,
@@ -22,9 +24,11 @@ console.log(receiverPrivateKey.toWIF());
   });
 
   it('should generate a checklocktimeverify redeemscript', function() {
-    var expected = '634c21' + receiverPrivateKey.publicKey.toString() +
-      'ac674c0583aac4d000b175684c21' + senderPrivateKey.publicKey.toString() +
+    var expected = '6321' + receiverPrivateKey.publicKey.toString() +
+      'ac670583aac4d000b1756821' + senderPrivateKey.publicKey.toString() +
       'ac';
+console.log(expected);
+console.log(new bitcore.Address(bitcore.crypto.Hash.sha256ripemd160(new Buffer(expected, 'hex')), 'testnet', bitcore.Address.PayToScriptHash));
     sender._buildRedeemScript();
     sender._redeemScript.toBuffer().toString('hex').should.equal(expected);
   });
