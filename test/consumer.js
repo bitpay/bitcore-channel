@@ -1,6 +1,5 @@
 'use strict';
 
-var Consumer = require('../lib/consumer');
 var expect = require('chai').expect;
 var should = require('chai').should();
 var bitcore = require('bitcore-lib');
@@ -47,19 +46,18 @@ describe('Consumer', function() {
   var consumer = new Consumer(opts);
   it('#createCommitmentTransaction', function() {
     var tx = consumer.createCommitmentTransaction();
-     tx.uncheckedSerialize().should.equal('010000000133618b3432d5032760dbfc642699e3715e48c9bb9bc011fd18c4fea5a6c383800000000000ffffffff0100ca9a3b0000000017a914a7d288759ef11ee55e1ba83d413ee4a6e274407f8700000000');
+    tx.uncheckedSerialize().should.equal('010000000133618b3432d5032760dbfc642699e3715e48c9bb9bc011fd18c4fea5a6c383800000000000ffffffff0100ca9a3b0000000017a914a7d288759ef11ee55e1ba83d413ee4a6e274407f8700000000');
   });
 
   it('#createChannelTransaction', function() {
     spendingTxJson.hash = '9b06a22817b61d357f1a7e5726522f930cda665e803c785c215269c961406c79';
-    spendingTxJson.outputs[0].script = Script.buildFromCLTVOut([p1.publicKey.toString(), p2.publicKey.toString()], Math.round(new Date('2020-01-01Z').getTime()/1000)).toHex();
+    spendingTxJson.outputs[0].script = Script.buildCLTVRedeemScript([p1.publicKey.toString(), p2.publicKey.toString()], Math.round(new Date('2020-01-01Z').getTime()/1000)).toHex();
     opts.spendingTx = new bitcore.Transaction(spendingTxJson);
     opts.toAddress = new bitcore.PrivateKey().toAddress().toString();
     opts.changeAddress = new bitcore.PrivateKey().toAddress().toString();
-    console.log(spendingTx.outputs[0].script.toAddress().toString());
     var consumer = new Consumer(opts);
     var tx = consumer.createChannelTransaction();
-console.log(tx.toObject());
+console.log(tx.uncheckedSerialize());
   });
 
 });
