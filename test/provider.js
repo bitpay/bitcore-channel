@@ -6,6 +6,7 @@ var bitcore = require('bitcore-lib');
 var Script = require('../lib/transaction/script')
 var PrivateKey = bitcore.PrivateKey;
 var path = require('path');
+var Transaction = require('../lib/transaction/transaction');
 
 /*
 1. consumer request payment channel by sending provider the following:
@@ -21,12 +22,10 @@ var path = require('path');
 */
 
 describe('Provider', function() {
-  var providerPrivKey = new PrivateKey('KzBkxNrZghHVqoj7nrANtubwyz1CLJA54zctjoW4DGQj5USpNXhP');
-  var consumerPrivKey = new PrivateKey('L5mzCbb3hzcWXS45f8FiV38oHTR5bQXaHaTk84yVZUmEb5x7JAZf');
-  var expectedAddressPrivKey = new bitcore.PrivateKey('L1i39ig9sHsTss5EBX3qmTLmAHAnqT65JQkQVSNEG6zwkKd919CY');
+  var providerPrivKey = new PrivateKey('cQ4BLV3itks2w6SxPb7HyfNr5SS4XB6ajqWToZV7jY8D5FeEWEn2');
+  var consumerPrivKey = new PrivateKey('cNykpBFHwU4ZW54m7Y6rqo8NFaG47AnTUNqhQ7mvJuAHcR4xpnQc');
 
-  var address = expectedAddressPrivKey.publicKey.toAddress('testnet').toString();
-  var amount = 10000000;
+  var expectedOutputAddress = 'n4THG9YHpVXizYgPFhVTZeJo2UttqXNcWD';
   var testdir = path.resolve(__dirname, './testdata');
   var channelTx = require(testdir + '/channeltx.json').rawtx;
   var commitmentTx = require(testdir + '/commitmenttx.json').rawtx;
@@ -36,13 +35,34 @@ describe('Provider', function() {
     channelTx: channelTx,
     commitmentTxRedeemScript: redeemScript,
     inputTxs: [commitmentTx],
-    expectedOutputAmount: amount,
-    expectedOutputAddress: address,
-    lowestAllowedFee: 1000
+    expectedOutputAmount: 150000000,
+    expectedOutputAddress: expectedOutputAddress,
+    lowestAllowedFee: 100000
   };
 
   it('should verify a channel transaction', function() {
     Provider.verifyChannelTransaction(opts).should.be.true;
+  });
+
+  it('should not verify a channel transaction that has a bad signature', function() {
+    var badTx = new Transaction();
+    var ctx = new Transaction(commitmentTx);
+    var p1 = providerPrivKey.publicKey.toString();
+    var p2 = consumerPrivKey.publicKey.toString();
+
+    var utxo = {
+      txId: ctx.hash,
+      address: ctx.outputs[0].script.toAddress().toString(),
+      satoshis: ctx.outputs[0].satoshis,
+      script: ctx.outputs[0].script.toHex(),
+      outputIndex: 0
+    };
+
+    badTx.from(utxo, [p1, p2], 1582934400);
+    badTx.to('n4THG9YHpVXizYgPFhVTZeJo2UttqXNcWD', 150000000);
+    badTx.sign(providerPrivKey); //this is the wrong private key to be signing a channel tx
+    opts.channelTx = badTx;
+    Provider.verifyChannelTransaction(opts).should.be.false;
   });
 });
 
