@@ -169,6 +169,60 @@ describe('Consumer', function() {
       interpreter.errstr.should.equal('SCRIPT_ERR_UNSATISFIED_LOCKTIME');
     });
 
+    it('should not allow spending of a commitment tx if there are 2 signatures, one valid, the other invalid, but also after lock time.', function() {
+      var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
+      var opts = {
+        prevTx: prevTx,
+        prevTxOutputIndex: 0,
+        network: 'testnet',
+        satoshis: 300000000,
+        consumerPrivateKey: consumerPrivKey,
+        commitmentTransaction: commitmentTx,
+        toAddress: consumerPrivKey.toAddress().toString(),
+        redeemScript: redeemScript,
+        fee: 100000,
+      };
+
+      var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
+      var scriptSig = spendingCommitmentTx.inputs[0].script;
+      scriptSig.chunks[0] = scriptSig.chunks[1];
+      scriptSig.prepend(bitcore.Opcode.OP_0);
+      var scriptPubKey = commitmentTx.outputs[0].script;
+      var interpreter = new Interpreter();
+      var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
+      res.should.be.false
+      interpreter.errstr.should.equal('SCRIPT_ERR_EVAL_FALSE_IN_P2SH_STACK');
+
+    });
+
+    it('should allow spending of a commitment tx if there are 2 valid signatures and an invalid locktime.', function() {
+      var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
+      var opts = {
+        prevTx: prevTx,
+        prevTxOutputIndex: 0,
+        network: 'testnet',
+        satoshis: 300000000,
+        consumerPrivateKey: consumerPrivKey,
+        providerPrivateKey: providerPrivKey,
+        commitmentTransaction: commitmentTx,
+        toAddress: consumerPrivKey.toAddress().toString(),
+        redeemScript: redeemScript,
+        fee: 100000,
+        lockTime: 0,
+        sequenceNumber: 0xffffffff - 1
+      };
+
+      var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
+      var scriptSig = spendingCommitmentTx.inputs[0].script;
+      scriptSig.chunks[0] = scriptSig.chunks[1];
+      scriptSig.prepend(bitcore.Opcode.OP_0);
+      var scriptPubKey = commitmentTx.outputs[0].script;
+      var interpreter = new Interpreter();
+      var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
+      res.should.be.true
+
+    });
+
 
   });
 
@@ -205,6 +259,32 @@ describe('Consumer', function() {
       var sh = bitcore.Transaction.sighash;
       var sig = bitcore.crypto.Signature.fromTxFormat(spendingCommitmentTx.inputs[0].script.chunks[1].buf);
       sh.verify(spendingCommitmentTx, sig, consumerPrivKey.publicKey, 0, scriptPubKey);
+    });
+
+    it('should create a valid channel tx that can only be spent by signing with the consumer private key and the provider private key, but lock time considerations are not done', function() {
+      var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
+      var opts = {
+        prevTx: prevTx,
+        prevTxOutputIndex: 0,
+        network: 'testnet',
+        satoshis: 300000000,
+        consumerPrivateKey: consumerPrivKey,
+        providerPrivateKey: providerPrivKey,
+        commitmentTransaction: commitmentTx,
+        toAddress: consumerPrivKey.toAddress().toString(),
+        redeemScript: redeemScript,
+        fee: 100000
+      };
+
+      var spendingCommitmentTx = Consumer.createChannelTransaction(opts);
+      var scriptSig = spendingCommitmentTx.inputs[0].script;
+      var scriptPubKey = commitmentTx.outputs[0].script;
+      var interpreter = new Interpreter();
+      var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
+      res.should.be.true;
+      spendingCommitmentTx.inputs[0].sequenceNumber.should.equal(0xffffffff);
+      spendingCommitmentTx.nLockTime.should.equal(0);
+
     });
 
   });

@@ -1,9 +1,11 @@
 'use strict';
 
 var Provider = require('../lib/provider');
+var Consumer = require('../lib/consumer');
 var should = require('chai').should();
 var bitcore = require('bitcore-lib');
 var Script = require('../lib/transaction/script')
+var Interpreter = bitcore.Script.Interpreter;
 var PrivateKey = bitcore.PrivateKey;
 var path = require('path');
 var Transaction = require('../lib/transaction/transaction');
@@ -22,26 +24,59 @@ var Transaction = require('../lib/transaction/transaction');
 */
 
 describe('Provider', function() {
-  var providerPrivKey = new PrivateKey('cQ4BLV3itks2w6SxPb7HyfNr5SS4XB6ajqWToZV7jY8D5FeEWEn2');
-  var consumerPrivKey = new PrivateKey('cNykpBFHwU4ZW54m7Y6rqo8NFaG47AnTUNqhQ7mvJuAHcR4xpnQc');
+  var providerPrivKey = new PrivateKey('cQ4BLV3itks2w6SxPb7HyfNr5SS4XB6ajqWToZV7jY8D5FeEWEn2', 'testnet');
+  var consumerPrivKey = new PrivateKey('cNykpBFHwU4ZW54m7Y6rqo8NFaG47AnTUNqhQ7mvJuAHcR4xpnQc', 'testnet');
+  var pubKeys = [providerPrivKey.publicKey.toString(), consumerPrivKey.publicKey.toString()];
+  var lockTime = Math.round(new Date('2020-02-29Z').getTime()/1000);
+  var redeemScript = Script.buildCLTVRedeemScript(pubKeys, lockTime);
+  var prevTx = new Transaction(require('./testdata/previousTx.json').rawtx);
+  var flags = Interpreter.SCRIPT_VERIFY_P2SH
+  | Interpreter.SCRIPT_VERIFY_STRICTENC
+  | Interpreter.SCRIPT_VERIFY_DERSIG
+  | Interpreter.SCRIPT_VERIFY_LOW_S
+  | Interpreter.SCRIPT_VERIFY_MINIMALDATA
+  | Interpreter.SCRIPT_VERIFY_SIGPUSHONLY
+  | Interpreter.SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
 
-  var expectedOutputAddress = 'n4THG9YHpVXizYgPFhVTZeJo2UttqXNcWD';
-  var testdir = path.resolve(__dirname, './testdata');
-  var channelTx = require(testdir + '/channeltx.json').rawtx;
-  var commitmentTx = require(testdir + '/commitmenttx.json').rawtx;
-  var redeemScript = new bitcore.Transaction(channelTx).inputs[0].script.chunks[2].buf;
-
-  var opts = {
-    channelTx: channelTx,
-    commitmentTxRedeemScript: redeemScript,
-    inputTxs: [commitmentTx],
-    expectedOutputAmount: 150000000,
-    expectedOutputAddress: expectedOutputAddress,
-    lowestAllowedFee: 100000
+  var commitOpts = {
+    prevTx: prevTx,
+    prevTxOutputIndex: 0,
+    network: 'testnet',
+    satoshis: 300000000,
+    privateKey:  new PrivateKey('cQgpdm9P92YQSkvWZLATUVj4ADpgRkru8HyXDY92hPDVbFehx1bC', 'testnet'),
+    changeAddress: consumerPrivKey.toAddress().toString(),
+    redeemScript: redeemScript,
+    fee: 100000
   };
 
+  var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
+
+  var chanOpts = {
+    prevTx: prevTx,
+    prevTxOutputIndex: 0,
+    network: 'testnet',
+    satoshis: 300000000,
+    consumerPrivateKey: consumerPrivKey,
+    commitmentTransaction: commitmentTx,
+    toAddress: providerPrivKey.toAddress().toString(),
+    changeAddress: consumerPrivKey.toAddress().toString(),
+    redeemScript: redeemScript,
+    fee: 100000
+  };
+
+  var channelTx = Consumer.createChannelTransaction(chanOpts);
+
   it('should verify a channel transaction', function() {
-    Provider.verifyChannelTransaction(opts).should.be.true;
+    var chanOpts = {
+      channelTx: channelTx,
+      commitmentTxRedeemScript: redeemScript,
+      inputTxs: [commitmentTx],
+      expectedOutputAmount: 300000000,
+      expectedOutputAddress: pubKeys[0],
+      lowestAllowedFee: 100000
+    };
+console.log(pubKeys[1]);
+    Provider.verifyChannelTransaction(chanOpts).should.be.true;
   });
 
   it('should not verify a channel transaction that has a bad signature', function() {
