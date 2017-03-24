@@ -13,8 +13,9 @@ describe('Consumer', function() {
 
   var providerPrivKey = new PrivateKey('cQ4BLV3itks2w6SxPb7HyfNr5SS4XB6ajqWToZV7jY8D5FeEWEn2', 'testnet');
   var consumerPrivKey = new PrivateKey('cNykpBFHwU4ZW54m7Y6rqo8NFaG47AnTUNqhQ7mvJuAHcR4xpnQc', 'testnet');
+  var pubKeys = [providerPrivKey.publicKey.toString(), consumerPrivKey.publicKey.toString()];
   var lockTime = Math.round(new Date('2020-02-29Z').getTime()/1000);
-  var redeemScript = Script.buildCLTVRedeemScript([providerPrivKey.publicKey.toString(), consumerPrivKey.publicKey.toString()], lockTime);
+  var redeemScript = Script.buildCLTVRedeemScript(pubKeys, lockTime);
   var prevTx = new Transaction(require('./testdata/previousTx.json').rawtx);
   var flags = Interpreter.SCRIPT_VERIFY_P2SH
   | Interpreter.SCRIPT_VERIFY_STRICTENC
@@ -104,15 +105,17 @@ describe('Consumer', function() {
         commitmentTransaction: commitmentTx,
         toAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
-        fee: 100000,
-        lockTime: (lockTime + 86400) //1 more day than the operand to CHECKLOCKTIMEVERIFY
+        fee: 100000
       };
 
       var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
       var scriptSig = spendingCommitmentTx.inputs[0].script;
       var scriptPubKey = commitmentTx.outputs[0].script;
+      var hash = Script.buildCLTVRedeemScript(pubKeys, lockTime);
+
       var interpreter = new Interpreter();
       var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
+      console.log(interpreter.errstr);
       res.should.be.true;
     });
 
