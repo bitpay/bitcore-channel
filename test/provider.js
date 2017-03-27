@@ -55,11 +55,11 @@ describe('Provider', function() {
     prevTx: prevTx,
     prevTxOutputIndex: 0,
     network: 'testnet',
-    satoshis: 300000000,
+    satoshis: 150000000,
     consumerPrivateKey: consumerPrivKey,
     commitmentTransaction: commitmentTx,
-    toAddress: providerPrivKey.toAddress().toString(),
-    changeAddress: consumerPrivKey.toAddress().toString(),
+    toAddress: providerPrivKey.toAddress('testnet').toString(),
+    changeAddress: consumerPrivKey.toAddress('testnet').toString(),
     redeemScript: redeemScript,
     fee: 100000
   };
@@ -71,11 +71,10 @@ describe('Provider', function() {
       channelTx: channelTx,
       commitmentTxRedeemScript: redeemScript,
       inputTxs: [commitmentTx],
-      expectedOutputAmount: 300000000,
-      expectedOutputAddress: pubKeys[0],
+      expectedOutputAmount: 150000000,
+      expectedOutputAddress: providerPrivKey.publicKey.toAddress().toString(),
       lowestAllowedFee: 100000
     };
-console.log(pubKeys[1]);
     Provider.verifyChannelTransaction(chanOpts).should.be.true;
   });
 
@@ -84,6 +83,7 @@ console.log(pubKeys[1]);
     var ctx = new Transaction(commitmentTx);
     var p1 = providerPrivKey.publicKey.toString();
     var p2 = consumerPrivKey.publicKey.toString();
+    var redeemScript = Script.buildCLTVRedeemScript([p1, p2], 158293440);
 
     var utxo = {
       txId: ctx.hash,
@@ -93,11 +93,19 @@ console.log(pubKeys[1]);
       outputIndex: 0
     };
 
-    badTx.from(utxo, [p1, p2], 1582934400);
+    badTx.from(utxo, redeemScript);
     badTx.to('n4THG9YHpVXizYgPFhVTZeJo2UttqXNcWD', 150000000);
     badTx.sign(providerPrivKey); //this is the wrong private key to be signing a channel tx
-    opts.channelTx = badTx;
-    Provider.verifyChannelTransaction(opts).should.be.false;
+    var chanOpts = {
+      channelTx: badTx,
+      commitmentTxRedeemScript: redeemScript,
+      inputTxs: [commitmentTx],
+      expectedOutputAmount: 150000000,
+      expectedOutputAddress: providerPrivKey.publicKey.toAddress().toString(),
+      lowestAllowedFee: 100000
+    };
+
+    Provider.verifyChannelTransaction(chanOpts).should.be.false;
   });
 });
 

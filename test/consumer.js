@@ -53,7 +53,7 @@ describe('Consumer', function() {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         commitmentTransaction: commitmentTx,
         toAddress: providerPrivKey.toAddress().toString(),
@@ -76,11 +76,12 @@ describe('Consumer', function() {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         providerPrivateKey: null,
         commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000
       };
@@ -90,32 +91,6 @@ describe('Consumer', function() {
       var scriptPubKey = commitmentTx.outputs[0].script;
       var interpreter = new Interpreter();
       var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
-      res.should.be.true;
-    });
-
-    it('should allow spending of commitment tx after the lock time expires using default time lock setting', function() {
-      var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
-      var opts = {
-        prevTx: prevTx,
-        prevTxOutputIndex: 0,
-        network: 'testnet',
-        satoshis: 300000000,
-        consumerPrivateKey: consumerPrivKey,
-        providerPrivateKey: null,
-        commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
-        redeemScript: redeemScript,
-        fee: 100000
-      };
-
-      var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
-      var scriptSig = spendingCommitmentTx.inputs[0].script;
-      var scriptPubKey = commitmentTx.outputs[0].script;
-      var hash = Script.buildCLTVRedeemScript(pubKeys, lockTime);
-
-      var interpreter = new Interpreter();
-      var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
-      console.log(interpreter.errstr);
       res.should.be.true;
     });
 
@@ -125,14 +100,15 @@ describe('Consumer', function() {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         providerPrivateKey: null,
         commitmentTransaction: commitmentTx,
         toAddress: consumerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000,
-        lockTime: (lockTime - 86400) //1 more day than the operand to CHECKLOCKTIMEVERIFY
+        lockTime: (lockTime - 86400) //1 less day than the operand to CHECKLOCKTIMEVERIFY
       };
 
       var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
@@ -150,11 +126,12 @@ describe('Consumer', function() {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         providerPrivateKey: null,
         commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000,
         sequenceNumber: 0xffffffff
@@ -169,16 +146,17 @@ describe('Consumer', function() {
       interpreter.errstr.should.equal('SCRIPT_ERR_UNSATISFIED_LOCKTIME');
     });
 
-    it('should not allow spending of a commitment tx if there are 2 signatures, one valid, the other invalid, but also after lock time.', function() {
+    it('should not allow spending of a commitment tx if there are 2 signatures, one valid, the other invalid, but also after lock time', function() {
       var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
       var opts = {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000,
       };
@@ -195,17 +173,18 @@ describe('Consumer', function() {
 
     });
 
-    it('should allow spending of a commitment tx if there are 2 valid signatures and an invalid locktime.', function() {
+    it('should allow spending of a commitment tx if there are 2 valid signatures and an invalid locktime', function() {
       var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
       var opts = {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         providerPrivateKey: providerPrivKey,
         commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000,
         lockTime: 0,
@@ -235,11 +214,12 @@ describe('Consumer', function() {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         providerPrivateKey: null,
         commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000,
         sequenceNumber: 0xffffffff
@@ -267,11 +247,12 @@ describe('Consumer', function() {
         prevTx: prevTx,
         prevTxOutputIndex: 0,
         network: 'testnet',
-        satoshis: 300000000,
+        satoshis: 150000000,
         consumerPrivateKey: consumerPrivKey,
         providerPrivateKey: providerPrivKey,
         commitmentTransaction: commitmentTx,
-        toAddress: consumerPrivKey.toAddress().toString(),
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
         redeemScript: redeemScript,
         fee: 100000
       };
@@ -286,7 +267,6 @@ describe('Consumer', function() {
       spendingCommitmentTx.nLockTime.should.equal(0);
 
     });
-
   });
 });
 

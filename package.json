@@ -4,7 +4,7 @@
   "description": "Add payment channels support to bitcore",
   "scripts": {
     "lint": "gulp lint",
-    "test": "gulp test",
+    "test": "mocha -R spec test",
     "coverage": "gulp coverage"
   },
   "author": "BitPay <dev@bitpay.com>",
