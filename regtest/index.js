@@ -33,16 +33,16 @@ var consumerPubKey = consumerPrivKey.publicKey;
 //first round of tests will ensure the provider can spend its channel tx before the lock time
 var providerLockTime = Math.round(Date.now()/1000) + 30; // 30 seconds from now
 //second round of tests will create a new commitment tx, the provider drops off the face of the earth and the consumer need to generate a refund tx and spend funds back to himself
-var consumerLockTime = Math.round(Date.now()/1000) - 1; // 1 second ago
+var consumerLockTime = Math.round(Date.now()/1000); // 1 second ago
 
 var pubKeys = [providerPubKey.toString(), consumerPubKey.toString()];
 
 var providerRedeemScript = Script.buildCLTVRedeemScript(pubKeys, providerLockTime);
 var consumerRedeemScript = Script.buildCLTVRedeemScript(pubKeys, consumerLockTime);
+var redeemScript = providerRedeemScript;
 
 var walletPassphrase = 'test';
 var startingSatoshis = 0;
-var commitmentTx;
 
 async.waterfall([
   unlockWallet,
@@ -55,8 +55,8 @@ async.waterfall([
   generateSixBlocks,
   generateChannelTx,
   verifyChannelTx,
-  spendChannelTx,
-  generateCommitmentTx,
+  spendTx,
+  switchRedeemScripts,
   getPrivateKeyWithABalance,
   generateSpendingTx,
   sendSpendingTx,
@@ -65,13 +65,18 @@ async.waterfall([
   sendCommitmentTx,
   generateSixBlocks,
   generateRefundTx,
-  spendRefundTx
+  spendTx
 ], function(err, results) {
   if (err) {
     return console.trace(err);
   }
-  console.log(results);
+  console.log('All checks completed.');
 });
+
+function switchRedeemScripts(next) {
+  redeemScript = consumerRedeemScript;
+  next();
+}
 
 function generateSixBlocks(tx, next) {
   rpc.generate(6, function(err, res) {
@@ -137,7 +142,7 @@ function sendSpendingTx(tx, next) {
   });
 }
 
-function generateCommitmentTx(redeemScript, spendingTx, next) {
+function generateCommitmentTx(spendingTx, next) {
   var commitmentTx = Consumer.createCommitmentTransaction({
     prevTx: spendingTx,
     privateKey: startingPrivKey,
@@ -175,8 +180,7 @@ function generateChannelTx(commitmentTx, next) {
   next(null, channelTx, commitmentTx);
 }
 
-function verifyChannelTx(channelTx, cTx, next) {
-  commitmentTx = cTx;
+function verifyChannelTx(channelTx, commitmentTx, next) {
   var res = Provider.verifyChannelTransaction({
     channelTx: channelTx,
     commitmentTxRedeemScript: providerRedeemScript,
@@ -188,14 +192,14 @@ function verifyChannelTx(channelTx, cTx, next) {
   if (!res) {
     return next(new Error('channel tx did not verify'));
   }
+  channelTx.sign(providerPrivKey);
   next(null, channelTx);
 }
 
-function spendChannelTx(channelTx, next) {
-  channelTx.sign(providerPrivKey);
-  next();
-  console.log('sending channel tx: ', channelTx.hash);
-  rpc.sendRawTransaction(channelTx.serialize(), function(err, res) {
+function spendTx(tx, next) {
+  console.log('sending tx: ', tx.hash);
+  //TODO: I guess we ought to be able to perform final checks
+  rpc.sendRawTransaction(tx.uncheckedSerialize(), function(err, res) {
     if(err) {
       return next(err);
     }
@@ -203,7 +207,7 @@ function spendChannelTx(channelTx, next) {
   });
 }
 
-function generateRefundTx(next) {
+function generateRefundTx(commitmentTx, next) {
   var refundTx = Consumer.createCommitmentRefundTransaction({
     consumerPrivateKey: consumerPrivKey,
     network: 'testnet',
@@ -215,14 +219,4 @@ function generateRefundTx(next) {
     changeAddress: providerPrivKey.toAddress().toString()
   });
   next(null, refundTx);
-}
-
-function spendRefundTx(refundTx, next) {
-  console.log('sending refund tx: ', refundTx.hash);
-  rpc.sendRawTransaction(refundTx.uncheckedSerialize(), function(err, res) {
-    if(err) {
-      return next(err);
-    }
-    next(null, 'done: spent refund tx to: ' + res.result);
-  });
 }

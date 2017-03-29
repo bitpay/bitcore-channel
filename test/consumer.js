@@ -163,8 +163,7 @@ describe('Consumer', function() {
 
       var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
       var scriptSig = spendingCommitmentTx.inputs[0].script;
-      scriptSig.chunks[0] = scriptSig.chunks[1];
-      scriptSig.prepend(bitcore.Opcode.OP_0);
+      scriptSig.prepend(scriptSig.chunks[0].buf);
       var scriptPubKey = commitmentTx.outputs[0].script;
       var interpreter = new Interpreter();
       var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
@@ -193,8 +192,6 @@ describe('Consumer', function() {
 
       var spendingCommitmentTx = Consumer.createCommitmentRefundTransaction(opts);
       var scriptSig = spendingCommitmentTx.inputs[0].script;
-      scriptSig.chunks[0] = scriptSig.chunks[1];
-      scriptSig.prepend(bitcore.Opcode.OP_0);
       var scriptPubKey = commitmentTx.outputs[0].script;
       var interpreter = new Interpreter();
       var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
@@ -231,13 +228,13 @@ describe('Consumer', function() {
       var interpreter = new Interpreter();
       var res = interpreter.verify(scriptSig, scriptPubKey, spendingCommitmentTx, 0, flags);
       res.should.be.false;
-      //this also means that the providers key was not supplied and therefore did not sign
+      //this also means that the provider's key was not supplied and therefore did not sign
       interpreter.errstr.should.equal('SCRIPT_ERR_UNSATISFIED_LOCKTIME');
       //this ensures that this transaction is a true 2 of 2, protecting both consumer and provider
       spendingCommitmentTx.inputs[0].sequenceNumber.should.equal(0xffffffff);
       spendingCommitmentTx.nLockTime.should.equal(0);
       var sh = bitcore.Transaction.sighash;
-      var sig = bitcore.crypto.Signature.fromTxFormat(spendingCommitmentTx.inputs[0].script.chunks[1].buf);
+      var sig = bitcore.crypto.Signature.fromTxFormat(spendingCommitmentTx.inputs[0].script.chunks[0].buf);
       sh.verify(spendingCommitmentTx, sig, consumerPrivKey.publicKey, 0, scriptPubKey);
     });
 
