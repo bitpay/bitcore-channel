@@ -27,6 +27,7 @@ var startingPrivKey = new PrivateKey('testnet');
 
 var providerPrivKey = new PrivateKey('cNZnXzQfAuDK4nBth5ViaSqgyYJUzJ5Ph2Dpmea933quEmHygN8u', 'testnet');
 var consumerPrivKey = new PrivateKey('cQBAt1aBk3qQmpJMGTbu9qUY8uhwALuSVEhWnr1ytXLTrj4LJp1u', 'testnet');
+
 var providerPubKey = providerPrivKey.publicKey;
 var consumerPubKey = consumerPrivKey.publicKey;
 
@@ -45,14 +46,15 @@ var walletPassphrase = 'test';
 var startingSatoshis = 0;
 
 async.waterfall([
+  getinfo,
   unlockWallet,
   getPrivateKeyWithABalance,
   generateSpendingTx,
   sendSpendingTx,
-  generateSixBlocks,
+  generateBlocks,
   generateCommitmentTx,
   sendCommitmentTx,
-  generateSixBlocks,
+  generateBlocks,
   generateChannelTx,
   verifyChannelTx,
   spendTx,
@@ -60,10 +62,10 @@ async.waterfall([
   getPrivateKeyWithABalance,
   generateSpendingTx,
   sendSpendingTx,
-  generateSixBlocks,
+  generateBlocks,
   generateCommitmentTx,
   sendCommitmentTx,
-  generateSixBlocks,
+  generateBlocks,
   generateRefundTx,
   spendTx
 ], function(err, results) {
@@ -73,13 +75,28 @@ async.waterfall([
   console.log('All checks completed.');
 });
 
+function getinfo(next) {
+  rpc.getInfo(function(err, res) {
+    if(err) {
+      return next(err);
+    }
+    console.log(res.result);
+    // means we won't have any spendable bitcoins to work with
+    if (res.blocks < 150) {
+      return generateBlocks(150, null, next);
+    }
+    next();
+  });
+}
+
 function switchRedeemScripts(next) {
   redeemScript = consumerRedeemScript;
   next();
 }
 
-function generateSixBlocks(tx, next) {
-  rpc.generate(6, function(err, res) {
+function generateBlocks(count, tx, next) {
+  var num = count || 6;
+  rpc.generate(num, function(err, res) {
     if(err) {
       return next(err);
     }
@@ -138,7 +155,7 @@ function sendSpendingTx(tx, next) {
     if(err) {
       return next(err);
     }
-    next(null, tx);
+    next(null, null, tx);
   });
 }
 
@@ -162,7 +179,7 @@ function sendCommitmentTx(commitmentTx, next) {
     if(err) {
       return next(err);
     }
-    next(null, commitmentTx);
+    next(null, null, commitmentTx);
   });
 }
 
@@ -199,7 +216,7 @@ function verifyChannelTx(channelTx, commitmentTx, next) {
 function spendTx(tx, next) {
   console.log('sending tx: ', tx.hash);
   //TODO: I guess we ought to be able to perform final checks
-  rpc.sendRawTransaction(tx.uncheckedSerialize(), function(err, res) {
+  rpc.sendRawTransaction(tx.serialize(), function(err, res) {
     if(err) {
       return next(err);
     }

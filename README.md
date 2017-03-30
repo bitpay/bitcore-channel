@@ -12,34 +12,56 @@ See [the main bitcore repo][bitcore] or the [bitcore guide on Payment Channels](
 
 ## Parties involved (One way payment channel only)
 
-* Sender
-* Receiver
+* Consumer (party putting money into the channel)
+* Provider (party accepting micropayments for goods/services)
 
 ## Work Flow
 
-* Sender desires to open a payment channel with receiver.
-* Sender creates a redeem script and a desired bitcoin amount. The simplest version of this is a 2-2 multisig with a CHECKLOCKTIMEVERIFY check.
-  - e.g. IF (receiver public key) OP_CHECKSIG ELSE (time expiry) OP_CHECKLOCKTIMEVERIFY DROP ENDIF (sender public key) OP_CHECKSIG
-* Sender sends the redeem script and the amount for the payment channel to the receiver.
-* If the receiver agrees to the redeem script and the amount, it will reply with a list of public keys needed to populate the redeem script fully. In the above example, only one public key will be needed from the receiver.
-* If the receiver does not agree to the redeem script and/or the amount, it will reply with an error telling the sender what was wrong.
-  - e.g. { message: 'expiration time too soon' }, or { message: 'amount too large.' }.
-* When the sender gets a successful response from the receiver (public keys to use), it will:
-  - Populate the redeem script with the sender's public keys
-  - Create a hash from the fully populated redeem script (script hash)
-  - Create a new bitcoin transaction (tx0), spending the agreed upon amount of bitcoin to the address of the script hash (p2sh)
-  - Broadcast the transaction to the Bitcoin network
-* When the receiver determines the transaction previously broadcasted to the bitcoin network by the sender is confirmed (possibly 6 confirmations), it will then allow the sender to start sending payments through the payment channel.
-* The sender can then send any number of transactions that spend the output amount from tx0.
-* Sender creates tx1, input uses utxo from tx0, output0 pays receiver a desired amount, output1 (if needed) is a change address to sender. The sender signs tx1 and sends tx1 to the receiver. e.g.: utxo from tx0 = 10 BTC
-  - tx1: output 0: 1 BTC to receiver, output 1: 8.999 BTC as change, output 2: OP_RETURN receiver data, 100,000 satoshis miner fee.
-  - tx2: output 0: 2 BTC to receiver, output 1: 7.999 BTC as change, output 2: OP_RETURN receiver data, 100,000 satoshis miner fee.
-* Each time the receiver receives a transaction from the sender, it will validate the receiver data with respect to the new amount sent. The difference between the new amount and the last tx amount received should equal the amount needed by the receiver.
-* Should the sender need to close the payment channel for any reason, the sender should send the receiver a close payment channel request.
-* The receiver will broadcast the latest signed tx from the sender to the Bitcoin network and respond to the sender with the txid on the network.
-* Should the receiver wish to close the payment channel early, the receiver will broadcast the sender's latest tx to the bitcoin network and signal the sender that the payment channel is closed.
-* If the receiver goes dark or is unreachable, the sender can wait until the expiry time of tx0 and spend the funds back to himself.
+* Consumer desires to open a payment channel with provider.
+* Consumer sends a json object to the Provider:
 
+```json
+{
+  "lockTime": 1490813616, // time in secs when channel expires
+  "satoshis": 1000000000, // 10 BTC
+  "pubKey": "0310f5f2fa2f9d00c5754978183b801ee69f3586e639993d39a0fc79de7c36ac3d" // consumer's pubkey
+}
+```
+
+* If the provider accepts the terms of the channel, they will reply with their own pubkey. If not, they reply with an error.
+* The consumer can then construct a redeem script:
+
+```javascript
+var Consumer = require('./lib/consumer');
+var redeemScript = Consumer.createRedeemScript(["0310f5f2fa2f9d00c5754978183b801ee69f3586e639993d39a0fc79de7c36ac3d", providerPubKey], 1490813616);
+```
+
+* The Consumer can then create a commitment transaction that spends their own funds to a time-locked transaction:
+
+```javascript
+var opts = {
+  privateKey: consumerPrivateKey,
+  satoshis: 1000000000,
+  changeAddress: someChangeAddress,
+  redeemScript: redeemScript,
+  fee: 100000,
+  prevTx: serializedPrevTx,  //we are spending funds from this tx to the commitment tx
+  prevOutputIndex: index
+};
+var commitmentTx = Consumer.createCommitmentTransaction(opts);
+```
+
+* Consumer then broadcasts the commitment tx to the Bitcoin peer to peer network.
+* In the meantime, the provider will be monitoring the Bitcoin blockchain for the commitment tx's existence.
+* Once the provider is satisfied that the consumer's commitment transaction is safely in the blockchain, the consumer is free to start sending channel transactions.
+* The consumer will then generate channel tranactions, incrementally increasing the amount sent over the channel. The channel transactions are not sent to the Bitcoin network, but sent over an alternate communications channel such as https. The consumer transaction will be constructed and signed by the consumer.
+
+```javascript
+var opts = {
+  consumerPrivateKey: consumerPrivateKey,
+  satoshis: 300000000, // this is ACCUMULATIVE, meaning the caller must keep track of what's already been sent over the channel and set this value appropriately
+  toAddress: provider's address
+```
 ## Notes
 
 * The receiver must be careful to broadcast the latest transaction before the expiry time. Failure to do so will result in tx0 being spent by the sender after expiry time and negating all the tx's sent by the sender during the payment channel.
@@ -50,7 +72,7 @@ See [CONTRIBUTING.md](https://github.com/bitpay/bitcore/blob/master/CONTRIBUTING
 
 Code released under [the MIT license](https://github.com/bitpay/bitcore/blob/master/LICENSE).
 
-Copyright 2013-2015 BitPay, Inc. Bitcore is a trademark maintained by BitPay, Inc.
+Copyright 2013-2017 BitPay, Inc. Bitcore is a trademark maintained by BitPay, Inc.
 
 [bitcore]: https://github.com/bitpay/bitcore
 [channel]: https://bitcoin.org/en/developer-guide#micropayment-channel
