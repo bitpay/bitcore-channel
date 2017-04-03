@@ -1,5 +1,9 @@
 'use strict';
 
+var mkdirp = require('mkdirp');
+var rimraf = require('rimraf');
+var chai = require('chai');
+var spawn = require('child_process').spawn;
 var async = require('async');
 var bitcore = require('bitcore-lib');
 var Unit = bitcore.Unit;
@@ -16,7 +20,20 @@ var config = {
   pass: 'local321',
   host: '127.0.0.1',
   port: '58332',
-  network: 'testnet'
+  rejectUnauthorized: false
+};
+
+var bitcoin = {
+  options: {
+    datadir: '/tmp/bitcoin',
+    listen: 0,
+    regtest: 1,
+    server: 1,
+    rpcuser: config.user,
+    rpcpassword: config.pass,
+    rpcport: config.port
+  },
+  process: null
 };
 
 var fee = 100000;
@@ -45,42 +62,94 @@ var redeemScript = providerRedeemScript;
 var walletPassphrase = 'test';
 var startingSatoshis = 0;
 
-async.waterfall([
-  getinfo,
-  unlockWallet,
-  getPrivateKeyWithABalance,
-  generateSpendingTx,
-  sendSpendingTx,
-  generateBlocks,
-  generateCommitmentTx,
-  sendCommitmentTx,
-  generateBlocks,
-  generateChannelTx,
-  verifyChannelTx,
-  spendTx,
-  switchRedeemScripts,
-  getPrivateKeyWithABalance,
-  generateSpendingTx,
-  sendSpendingTx,
-  generateBlocks,
-  generateCommitmentTx,
-  sendCommitmentTx,
-  generateBlocks,
-  generateRefundTx,
-  spendTx
-], function(err, results) {
-  if (err) {
-    return console.trace(err);
-  }
-  console.log('All checks completed.');
+
+
+describe('CLTV Transaction work flow', function() {
+
+  this.timeout(60000);
+
+  after(function(done) {
+    bitcoin.process.kill();
+    done();
+  });
+
+  it('should test all the things', function(done) {
+
+    async.waterfall([
+      startBitcoind,
+      waitForBitcoinReady,
+      unlockWallet,
+      getPrivateKeyWithABalance,
+      generateSpendingTx,
+      sendSpendingTx,
+      generateBlocks,
+      generateCommitmentTx,
+      sendCommitmentTx,
+      generateBlocks,
+      generateChannelTx,
+      verifyChannelTx,
+      spendTx,
+      switchRedeemScripts,
+      getPrivateKeyWithABalance,
+      generateSpendingTx,
+      sendSpendingTx,
+      generateBlocks,
+      generateCommitmentTx,
+      sendCommitmentTx,
+      generateBlocks,
+      generateRefundTx,
+      spendTx
+    ], function(err, results) {
+      if (err) {
+        return console.trace(err);
+      }
+      done();
+    });
+  });
 });
+
+function toArgs(opts) {
+  return Object.keys(opts).map(function(key) {
+    return '-' + key + '=' + opts[key];
+  });
+}
+
+function waitForBitcoinReady(next) {
+  async.retry({ times: 10, interval: 1000 }, function(next) {
+    rpc.generate(150, function(err, res) {
+      if (err || (res && res.error)) {
+        return next('keep trying');
+      }
+      next();
+    });
+  }, function(err) {
+    if(err) {
+      return next(err);
+    }
+    next();
+  });
+}
+
+function startBitcoind(next) {
+  rimraf(bitcoin.options.datadir, function(err) {
+    if(err) {
+      return next(err);
+    }
+    mkdirp(bitcoin.options.datadir, function(err) {
+      if(err) {
+        return next(err);
+      }
+      bitcoin.process = spawn('bitcoind', toArgs(bitcoin.options));
+      next();
+    });
+  });
+}
 
 function getinfo(next) {
   rpc.getInfo(function(err, res) {
     if(err) {
       return next(err);
     }
-    console.log(res.result);
     // means we won't have any spendable bitcoins to work with
     if (res.blocks < 150) {
       return generateBlocks(150, null, next);
@@ -150,7 +219,6 @@ function generateSpendingTx(privKey, utxo,  next) {
 }
 
 function sendSpendingTx(tx, next) {
-  console.log('sending starting tx: ', tx.hash);
   rpc.sendRawTransaction(tx.serialize(), function(err, res) {
     if(err) {
       return next(err);
@@ -174,7 +242,6 @@ function generateCommitmentTx(spendingTx, next) {
 }
 
 function sendCommitmentTx(commitmentTx, next) {
-  console.log('sending commmitment tx: ', commitmentTx.hash);
   rpc.sendRawTransaction(commitmentTx.serialize(), function(err, res) {
     if(err) {
       return next(err);
@@ -214,7 +281,6 @@ function verifyChannelTx(channelTx, commitmentTx, next) {
 }
 
 function spendTx(tx, next) {
-  console.log('sending tx: ', tx.hash);
   //TODO: I guess we ought to be able to perform final checks
   rpc.sendRawTransaction(tx.serialize(), function(err, res) {
     if(err) {

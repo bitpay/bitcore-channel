@@ -10,7 +10,7 @@ A module for [bitcore][bitcore] that implements [Payment Channels][channel]. Pay
 
 See [the main bitcore repo][bitcore] or the [bitcore guide on Payment Channels](http://bitcore.io/guide/module/channel/index.html) for more information.
 
-## Parties involved (One way payment channel only)
+## Parties involved (One-way payment channel only)
 
 * Consumer (party putting money into the channel)
 * Provider (party accepting micropayments for goods/services)

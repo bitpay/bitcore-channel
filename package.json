@@ -1,11 +1,11 @@
 {
   "name": "bitcore-channel",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Add payment channels support to bitcore",
   "scripts": {
-    "lint": "gulp lint",
-    "test": "mocha -R spec test",
-    "coverage": "gulp coverage"
+    "jshint": "jshint --reporter=node_modules/jshint-stylish ./lib",
+    "regtest": "node ./regtest/index.js",
+    "test": "mocha -R spec test"
   },
   "author": "BitPay <dev@bitpay.com>",
   "contributors": [
@@ -25,12 +25,13 @@
     "satoshi",
     "payment channels",
     "channel",
-    "smart contract"
+    "smart contract",
+    "check lock time verify"
   ],
   "license": "MIT",
   "repository": "https://github.com/bitpay/bitcore-channel",
   "dependencies": {
-    "bitcore-lib": "^0.13.7",
+    "bitcore-lib": "^0.14.0",
     "bn.js": "^4.11.6",
     "inherits": "=2.0.1",
     "lodash": "=3.10.1"
@@ -38,12 +39,8 @@
   "devDependencies": {
     "async": "^2.2.0",
     "bitcoind-rpc": "^0.7.0",
-    "bitcore-build": "git://github.com/bitpay/bitcore-build.git",
-    "brfs": "^1.2.0",
     "chai": "^2.3.0",
-    "gulp": "^3.8.10",
-    "nodejs-externs": "^0.10.0",
-    "request": "^2.48.0",
-    "vinyl-transform": "^1.0.0"
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.6.1"
   }
 }
