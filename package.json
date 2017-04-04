@@ -4,7 +4,7 @@
   "description": "Add payment channels support to bitcore",
   "scripts": {
     "jshint": "jshint --reporter=node_modules/jshint-stylish ./lib",
-    "regtest": "node ./regtest/index.js",
+    "regtest": "mocha -R spec regtest",
     "test": "mocha -R spec test"
   },
   "author": "BitPay <dev@bitpay.com>",
