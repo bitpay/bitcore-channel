@@ -264,6 +264,29 @@ describe('Consumer', function() {
       spendingCommitmentTx.nLockTime.should.equal(0);
 
     });
+
+    it('should fail to locate the proper output in the supplied commitment tx', function() {
+
+      var commitmentTx = Consumer.createCommitmentTransaction(commitOpts);
+      var redeemScript = Script.buildCLTVRedeemScript([pubKeys[1], new PrivateKey().publicKey.toString()], lockTime);
+
+      var opts = {
+        prevTx: prevTx,
+        prevTxOutputIndex: 0,
+        network: 'testnet',
+        satoshis: 150000000,
+        consumerPrivateKey: consumerPrivKey,
+        providerPrivateKey: providerPrivKey,
+        commitmentTransaction: commitmentTx,
+        toAddress: providerPrivKey.toAddress().toString(),
+        changeAddress: consumerPrivKey.toAddress().toString(),
+        redeemScript: redeemScript,
+        fee: 100000
+      };
+
+      expect(Consumer.createChannelTransaction.bind(this, opts)).to.throw(/could not locate proper output in supplied commitment transaction/);
+
+    });
   });
 });
 
