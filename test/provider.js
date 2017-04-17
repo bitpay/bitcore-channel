@@ -107,6 +107,17 @@ describe('Provider', function() {
 
     Provider.verifyChannelTransaction(chanOpts).should.be.false;
   });
+
+  it('should be able to sign a channel tx', function() {
+    var opts = {
+      channelTx: channelTx.serialize(),
+      inputTxs: [commitmentTx.serialize()],
+      privateKey: providerPrivKey.toWIF()
+    };
+    channelTx = Provider.signChannelTransaction(opts);
+    channelTx.isFullySigned().should.be_true;
+    channelTx.inputs[0].signatures.length.should.equal(2);
+  });
 });
 
 
