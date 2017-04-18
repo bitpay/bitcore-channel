@@ -142,18 +142,17 @@ describe('CLTV Transaction work flow', function() {
       }
       var channelTx = generateChannelTx(commitmentTx);
       verifyChannelTx(channelTx, commitmentTx).should.be.true;
-      //increase miner fee by taking some satoshis away from provider output
-      var feeIncrease = 100000;
-      var oldFee = channelTx.getFee();
-
-      //our output must be index 1
-      var providerOutput = channelTx.outputs[1];
-      var oldProviderOutputAmount = providerOutput.satoshis;
-      var newProviderOutputAmount = oldProviderOutputAmount - (oldFee + feeIncrease);
-      providerOutput.satoshis = newProviderOutputAmount;
-
+      var oldProviderOutputAmount = channelTx.outputs[1].satoshis;
       var consumerOutputAmount = channelTx.outputs[0].satoshis;
-
+      //increase miner fee by taking some satoshis away from provider output
+      channelTx = Provider.increaseChannelTransactionFee({
+        channelTx: channelTx,
+        feeIncreaseSatoshis: fee,
+        outputIndex: 1
+      });
+      var newProviderOutputAmount = channelTx.outputs[1].satoshis;
+      oldProviderOutputAmount.should.equal(fee + newProviderOutputAmount);
+      verifyChannelTx(channelTx, commitmentTx).should.be.true;
       var signedChannelTx = Provider.signChannelTransaction({
         channelTx: channelTx,
         inputTxs: [commitmentTx],
