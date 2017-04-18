@@ -1,20 +1,23 @@
 'use strict';
 
+var _ = require('lodash');
 var mkdirp = require('mkdirp');
 var rimraf = require('rimraf');
 var chai = require('chai');
+var should = chai.should();
 var spawn = require('child_process').spawn;
 var async = require('async');
 var bitcore = require('bitcore-lib');
 var Unit = bitcore.Unit;
-var Transaction = require('../lib/transaction/transaction');
+var CLTVTransaction = require('../lib/transaction/transaction');
+var Transaction = bitcore.Transaction;
 var PrivateKey = bitcore.PrivateKey;
 var BitcoinRPC = require('bitcoind-rpc');
 var Consumer = require('../lib/consumer');
 var Provider = require('../lib/provider');
 var Script = require('../lib/transaction/script');
 
-var config = {
+var rpcConfig = {
   protocol: 'http',
   user: 'bitcoin',
   pass: 'local321',
@@ -29,16 +32,16 @@ var bitcoin = {
     listen: 0,
     regtest: 1,
     server: 1,
-    rpcuser: config.user,
-    rpcpassword: config.pass,
-    rpcport: config.port
+    rpcuser: rpcConfig.user,
+    rpcpassword: rpcConfig.pass,
+    rpcport: rpcConfig.port
   },
   process: null
 };
 
 var fee = 100000;
 
-var rpc = new BitcoinRPC(config);
+var rpc = new BitcoinRPC(rpcConfig);
 
 var startingPrivKey = new PrivateKey('testnet');
 
@@ -48,9 +51,7 @@ var consumerPrivKey = new PrivateKey('cQBAt1aBk3qQmpJMGTbu9qUY8uhwALuSVEhWnr1ytX
 var providerPubKey = providerPrivKey.publicKey;
 var consumerPubKey = consumerPrivKey.publicKey;
 
-//first round of tests will ensure the provider can spend its channel tx before the lock time
-var providerLockTime = Math.round(Date.now()/1000) + 30; // 30 seconds from now
-//second round of tests will create a new commitment tx, the provider drops off the face of the earth and the consumer need to generate a refund tx and spend funds back to himself
+var providerLockTime = Math.round(Date.now()/1000) + 300; // 30 seconds from now
 var consumerLockTime = Math.round(Date.now()/1000); // 1 second ago
 
 var pubKeys = [providerPubKey.toString(), consumerPubKey.toString()];
@@ -67,45 +68,154 @@ var startingSatoshis = 0;
 describe('CLTV Transaction work flow', function() {
 
   this.timeout(60000);
+  var initialTx;
 
-  after(function(done) {
+  afterEach(function(done) {
     bitcoin.process.kill();
-    done();
+    setTimeout(done, 2000); //we need this here to let bitcoin process clean up after itself
   });
 
-  it('should test all the things', function(done) {
-
-    async.waterfall([
+  beforeEach(function(done) {
+    async.series([
       startBitcoind,
       waitForBitcoinReady,
       unlockWallet,
-      getPrivateKeyWithABalance,
-      generateSpendingTx,
-      sendSpendingTx,
-      generateBlocks,
-      generateCommitmentTx,
-      sendCommitmentTx,
-      generateBlocks,
-      generateChannelTx,
-      verifyChannelTx,
-      spendTx,
-      switchRedeemScripts,
-      getPrivateKeyWithABalance,
-      generateSpendingTx,
-      sendSpendingTx,
-      generateBlocks,
-      generateCommitmentTx,
-      sendCommitmentTx,
-      generateBlocks,
-      generateRefundTx,
-      spendTx
-    ], function(err, results) {
-      if (err) {
-        return console.trace(err);
+      setupInitialTx //generate and send a tx that a commitment tx can be built from
+    ], function(err, tx) {
+      if(err) {
+        return done(err);
       }
+      initialTx = _.compact(tx)[0];
       done();
     });
   });
+
+  it('should send a commitment tx', function(done) {
+     generateCommitmentTx(initialTx, function(err, commitmentTx) {
+       if(err) {
+         return done(err);
+       }
+       rpc.getRawTransaction(commitmentTx.hash, function(err, txSerialized) {
+         if(err) {
+           return done(err);
+         }
+         txSerialized.result.should.equal(commitmentTx.serialize());
+         done();
+       });
+     });
+  });
+
+  it('should create and verify a channel tx', function(done) {
+    generateCommitmentTx(initialTx, function(err, commitmentTx) {
+      if(err) {
+        return done(err);
+      }
+      var channelTx = generateChannelTx(commitmentTx);
+      channelTx.should.be.instanceof(Transaction);
+      verifyChannelTx(channelTx, commitmentTx).should.be.true;
+      done();
+    });
+  });
+
+  it('should allow provider to sign a raw, hexadecimal channel tx and send it', function(done) {
+    generateCommitmentTx(initialTx, function(err, commitmentTx) {
+      if(err) {
+        return done(err);
+      }
+      var channelTx = generateChannelTx(commitmentTx);
+      var rawChannelTx = channelTx.serialize();
+      verifyChannelTx(rawChannelTx, commitmentTx).should.be.true;
+      var signedChannelTx = Provider.signChannelTransaction({
+        channelTx: rawChannelTx,
+        inputTxs: [commitmentTx],
+        privateKey: providerPrivKey
+      });
+      signedChannelTx.isFullySigned().should.be.true;
+      sendTx(signedChannelTx, done);
+    });
+  });
+
+  it('should allow the provider to increase the miner fee without any action by the consumer', function(done) {
+    generateCommitmentTx(initialTx, function(err, commitmentTx) {
+      if(err) {
+        return done(err);
+      }
+      var channelTx = generateChannelTx(commitmentTx);
+      verifyChannelTx(channelTx, commitmentTx).should.be.true;
+      //increase miner fee by taking some satoshis away from provider output
+      var feeIncrease = 100000;
+      var oldFee = channelTx.getFee();
+
+      //our output must be index 1
+      var providerOutput = channelTx.outputs[1];
+      var oldProviderOutputAmount = providerOutput.satoshis;
+      var newProviderOutputAmount = oldProviderOutputAmount - (oldFee + feeIncrease);
+      providerOutput.satoshis = newProviderOutputAmount;
+
+      var consumerOutputAmount = channelTx.outputs[0].satoshis;
+
+      var signedChannelTx = Provider.signChannelTransaction({
+        channelTx: channelTx,
+        inputTxs: [commitmentTx],
+        privateKey: providerPrivKey
+      });
+
+      signedChannelTx.isFullySigned().should.be.true;
+      sendTx(signedChannelTx, function(err, tx) {
+        if(err) {
+          return done(err);
+        }
+        rpc.getRawTransaction(tx.hash, function(err, rawTx) {
+          if(err) {
+            return done(err);
+          }
+          var txToVerify = new Transaction(rawTx.result);
+          txToVerify.outputs[1].satoshis.should.equal(newProviderOutputAmount);
+          txToVerify.outputs[0].satoshis.should.equal(consumerOutputAmount);
+          done();
+        });
+      });
+    });
+  });
+
+  it('consumer should not be allowed to spend the commitment tx back to himself before the lock time expires and the provider has not signed', function(done) {
+    generateCommitmentTx(initialTx, function(err, commitmentTx) {
+      if(err) {
+        return done(err);
+      }
+      var refundTx = generateRefundTx(commitmentTx);
+      sendTx(refundTx, function(err, tx) {
+        err.message.should.equal('64: non-final');
+        done();
+      });
+    });
+  });
+
+  it('should allow the consumer to create/spend a commitment refund tx to recover funds', function(done) {
+    switchRedeemScripts();
+    generateCommitmentTx(initialTx, function(err, commitmentTx) {
+      if(err) {
+        return done(err);
+      }
+      var refundTx = generateRefundTx(commitmentTx);
+      sendTx(refundTx, function(err, tx) {
+        if(err) {
+          return done(err);
+        }
+        rpc.getRawTransaction(tx.hash, 1, function(err, jsonTx) {
+          if(err) {
+            return done(err);
+          }
+          jsonTx.result.hex.should.equal(tx.serialize());
+          jsonTx.result.confirmations.should.equal(6);
+          Unit.fromBTC(jsonTx.result.vout[0].value).satoshis.should.equal(commitmentTx.outputs[0].satoshis - fee);
+          jsonTx.result.vout[0].scriptPubKey.addresses[0].should.equal(consumerPrivKey.toAddress().toString());
+          done();
+        });
+      });
+    });
+  });
+
 });
 
 function toArgs(opts) {
@@ -152,25 +262,18 @@ function getinfo(next) {
     }
     // means we won't have any spendable bitcoins to work with
     if (res.blocks < 150) {
-      return generateBlocks(150, null, next);
+      return rpc.generate(150, next);
     }
     next();
   });
 }
 
-function switchRedeemScripts(next) {
-  redeemScript = consumerRedeemScript;
-  next();
-}
-
-function generateBlocks(count, tx, next) {
-  var num = count || 6;
-  rpc.generate(num, function(err, res) {
-    if(err) {
-      return next(err);
-    }
-    next(null, tx);
-  });
+function switchRedeemScripts() {
+  if (providerRedeemScript.toHex() === redeemScript.toHex()) {
+    redeemScript = consumerRedeemScript;
+  } else {
+    redeemScript = providerRedeemScript;
+  }
 }
 
 function unlockWallet(next) {
@@ -208,22 +311,37 @@ function getPrivateKeyWithABalance(next) {
   });
 }
 
-function generateSpendingTx(privKey, utxo,  next) {
+function generateSpendingTx(privKey, utxo) {
   var tx = new Transaction();
   startingSatoshis = Unit.fromBTC(utxo.amount).satoshis - fee;
   tx.from(utxo);
   tx.to(startingPrivKey.toAddress(), startingSatoshis);
   tx.fee(fee);
   tx.sign(privKey);
-  next(null, tx);
+  return tx;
 }
 
-function sendSpendingTx(tx, next) {
+function setupInitialTx(next) {
+  getPrivateKeyWithABalance(function(err, privKey, utxo) {
+    if(err) {
+      return next(err);
+    }
+    var tx = generateSpendingTx(privKey, utxo);
+    sendTx(tx, next);
+  });
+}
+
+function sendTx(tx, next) {
   rpc.sendRawTransaction(tx.serialize(), function(err, res) {
     if(err) {
       return next(err);
     }
-    next(null, null, tx);
+    rpc.generate(6, function(err) {
+      if(err) {
+        return next(err);
+      }
+      next(null, tx);
+    });
   });
 }
 
@@ -238,19 +356,15 @@ function generateCommitmentTx(spendingTx, next) {
     network: 'testnet',
     fee: fee
   });
-  next(null, commitmentTx);
-}
-
-function sendCommitmentTx(commitmentTx, next) {
-  rpc.sendRawTransaction(commitmentTx.serialize(), function(err, res) {
+  sendTx(commitmentTx, function(err, tx) {
     if(err) {
       return next(err);
     }
-    next(null, null, commitmentTx);
+    next(null, commitmentTx);
   });
 }
 
-function generateChannelTx(commitmentTx, next) {
+function generateChannelTx(commitmentTx) {
   var channelTx = Consumer.createChannelTransaction({
     consumerPrivateKey: consumerPrivKey,
     network: 'testnet',
@@ -261,11 +375,11 @@ function generateChannelTx(commitmentTx, next) {
     commitmentTransaction: commitmentTx,
     changeAddress: consumerPrivKey.toAddress().toString()
   });
-  next(null, channelTx, commitmentTx);
+  return channelTx;
 }
 
-function verifyChannelTx(channelTx, commitmentTx, next) {
-  var res = Provider.verifyChannelTransaction({
+function verifyChannelTx(channelTx, commitmentTx) {
+  return Provider.verifyChannelTransaction({
     channelTx: channelTx,
     commitmentTxRedeemScript: providerRedeemScript,
     inputTxs: [commitmentTx],
@@ -273,33 +387,17 @@ function verifyChannelTx(channelTx, commitmentTx, next) {
     expectedOutputAddress: providerPrivKey.toAddress().toString(),
     lowestAllowedFee: 1000
   });
-  if (!res) {
-    return next(new Error('channel tx did not verify'));
-  }
-  channelTx.sign(providerPrivKey);
-  next(null, channelTx);
 }
 
-function spendTx(tx, next) {
-  //TODO: I guess we ought to be able to perform final checks
-  rpc.sendRawTransaction(tx.serialize(), function(err, res) {
-    if(err) {
-      return next(err);
-    }
-    next();
-  });
-}
-
-function generateRefundTx(commitmentTx, next) {
-  var refundTx = Consumer.createCommitmentRefundTransaction({
+function generateRefundTx(commitmentTx) {
+  return Consumer.createCommitmentRefundTransaction({
     consumerPrivateKey: consumerPrivKey,
     network: 'testnet',
-    satoshis: commitmentTx.outputs[0].satoshis - fee - 100000,
+    satoshis: commitmentTx.outputs[0].satoshis - fee,
     toAddress: consumerPrivKey.toAddress().toString(),
-    redeemScript: consumerRedeemScript,
+    redeemScript: redeemScript,
     fee: fee,
     commitmentTransaction: commitmentTx,
-    changeAddress: providerPrivKey.toAddress().toString()
+    changeAddress: null
   });
-  next(null, refundTx);
 }
