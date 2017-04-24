@@ -8,6 +8,7 @@ var Interpreter = bitcore.Script.Interpreter;
 var Consumer = require('../lib/consumer');
 var Script = require('../lib/transaction/script');
 var Transaction = require('../lib/transaction/transaction');
+var BN = require('bn.js');
 
 describe('Consumer', function() {
 
@@ -286,6 +287,16 @@ describe('Consumer', function() {
 
       expect(Consumer.createChannelTransaction.bind(this, opts)).to.throw(/could not locate proper output in supplied commitment transaction/);
 
+    });
+  });
+
+  describe('Redeem Script', function() {
+    it('should create a redeem script', function() {
+      var redeemScript = Consumer.createRedeemScript(pubKeys, lockTime);
+      redeemScript.chunks[0].buf.toString('hex').should.equal(pubKeys[1]);
+      redeemScript.chunks[5].buf.toString('hex').should.equal(pubKeys[0]);
+      new BN(redeemScript.chunks[8].buf.reverse()).toNumber().should.equal(lockTime);
+      Consumer.createRedeemScript(pubKeys, lockTime).toHex().should.be.equal('2102b0296fed5368b9599f864df640e6ee3868402f24ca3e4e464a606610ec5a4310ac6374632103760a379009c189b5bf5cfe075e162a30ff44ab6800b9da455cd8639835afebb3ac670480a9595eb16868');
     });
   });
 });
